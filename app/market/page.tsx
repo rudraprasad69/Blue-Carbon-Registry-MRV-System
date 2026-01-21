@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { MarketAnalyticsDashboard } from '@/components/market-analytics-dashboard'
+import { LivePriceTicker } from '@/components/live-price-ticker'
 import { Button } from '@/components/ui/button'
 
 interface OrderForm {
@@ -56,9 +57,24 @@ export default function MarketPage() {
       </div>
 
       <div className="max-w-7xl mx-auto grid grid-cols-3 gap-6">
+        {/* Live Price Ticker */}
+        <div className="col-span-1">
+          <LivePriceTicker />
+        </div>
+
         {/* Market Analytics */}
         <div className="col-span-2">
           <div className="bg-slate-800/40 backdrop-blur border border-green-500/20 rounded-lg p-6">
+            <MarketAnalyticsDashboard refreshInterval={15000} showPriceHistory={true} showVolume={true} />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto grid grid-cols-3 gap-6">
+        {/* Market Analytics */}
+        <div className="col-span-2">
+          <div className="bg-slate-800/40 backdrop-blur border border-green-500/20 rounded-lg p-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Market Analytics</h2>
             <MarketAnalyticsDashboard refreshInterval={15000} showPriceHistory={true} showVolume={true} />
           </div>
         </div>

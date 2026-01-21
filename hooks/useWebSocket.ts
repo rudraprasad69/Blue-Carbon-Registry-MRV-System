@@ -40,9 +40,12 @@ interface UseWebSocketOptions {
  */
 export function useWebSocket(options: UseWebSocketOptions = {}) {
   const {
-    url = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-      ? 'ws://localhost:3001'
-      : `wss://${window.location.host}/ws`,
+    url = (() => {
+      if (typeof window === 'undefined') return 'ws://localhost:3001'
+      return window.location.hostname === 'localhost'
+        ? 'ws://localhost:3001'
+        : `wss://${window.location.host}/ws`
+    })(),
     autoConnect = true,
     reconnectAttempts = 5,
     reconnectInterval = 3000,
