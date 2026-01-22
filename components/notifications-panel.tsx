@@ -1,13 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { mockNotifications } from "@/lib/mock-data"
 
 export function NotificationsPanel() {
   const [notifications, setNotifications] = useState(mockNotifications)
+  const [mounted, setMounted] = useState(false)
   const unreadCount = notifications.filter((n) => !n.read).length
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleMarkAsRead = (id: string) => {
     setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
@@ -30,10 +35,18 @@ export function NotificationsPanel() {
     }
   }
 
+  if (!mounted) {
+    return (
+      <button className="relative p-2 hover:bg-muted rounded-lg transition-colors" disabled>
+        <Bell className="w-5 h-5 text-foreground" />
+      </button>
+    )
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative p-2 hover:bg-muted rounded-lg transition-colors">
+        <button suppressHydrationWarning className="relative p-2 hover:bg-muted rounded-lg transition-colors">
           <Bell className="w-5 h-5 text-foreground" />
           {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
         </button>

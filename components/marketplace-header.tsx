@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Search, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +14,35 @@ interface MarketplaceHeaderProps {
 }
 
 export function MarketplaceHeader({ walletConnected, userAddress, onWalletConnect }: MarketplaceHeaderProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <header className="border-b border-border bg-card dark:bg-slate-950/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="px-8 py-4 flex items-center justify-between">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search projects, credits..."
+                className="pl-10 rounded-full bg-muted border-0 focus:ring-2 focus:ring-primary"
+                disabled
+              />
+            </div>
+          </div>
+          <div className="flex-1" />
+        </div>
+      </header>
+    )
+  }
+
   return (
-    <header className="border-b border-border bg-card dark:bg-slate-950/50 backdrop-blur-sm sticky top-0 z-40">
+    <header suppressHydrationWarning className="border-b border-border bg-card dark:bg-slate-950/50 backdrop-blur-sm sticky top-0 z-40">
       <div className="px-8 py-4 flex items-center justify-between">
         {/* Search */}
         <div className="flex-1 max-w-md">
