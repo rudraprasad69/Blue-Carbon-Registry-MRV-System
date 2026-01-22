@@ -4,14 +4,16 @@ import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { mockNotifications } from "@/lib/mock-data"
+import { formatDateTimeConsistent } from "@/lib/date-utils"
 
 export function NotificationsPanel() {
   const [notifications, setNotifications] = useState(mockNotifications)
-  const [mounted, setMounted] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  // Ensure client-side rendering to avoid hydration mismatches
   useEffect(() => {
-    setMounted(true)
+    setIsClient(true)
   }, [])
 
   const handleMarkAsRead = (id: string) => {
@@ -35,18 +37,15 @@ export function NotificationsPanel() {
     }
   }
 
-  if (!mounted) {
-    return (
-      <button className="relative p-2 hover:bg-muted rounded-lg transition-colors" disabled>
-        <Bell className="w-5 h-5 text-foreground" />
-      </button>
-    )
+  // Format date consistently across server and client
+  const formatDate = (date: Date | string) => {
+    return formatDateTimeConsistent(date)
   }
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button suppressHydrationWarning className="relative p-2 hover:bg-muted rounded-lg transition-colors">
+        <button className="relative p-2 hover:bg-muted rounded-lg transition-colors">
           <Bell className="w-5 h-5 text-foreground" />
           {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
         </button>
@@ -83,8 +82,7 @@ export function NotificationsPanel() {
                       <p className="font-semibold text-sm text-foreground">{notif.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">{notif.message}</p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(notif.timestamp).toLocaleDateString()} at{" "}
-                        {new Date(notif.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {isClient ? formatDate(notif.timestamp) : "Loading..."}
                       </p>
                     </div>
                   </div>

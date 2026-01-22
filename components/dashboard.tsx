@@ -22,14 +22,8 @@ export function Dashboard() {
   const [walletConnected, setWalletConnected] = useState(false)
   const [userAddress, setUserAddress] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<"buyer" | "developer" | "community" | "regulator">("buyer")
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
     if (userRole === "buyer") {
       setActiveTab("marketplace")
     } else if (userRole === "developer") {
@@ -39,7 +33,7 @@ export function Dashboard() {
     } else if (userRole === "regulator") {
       setActiveTab("regulator")
     }
-  }, [userRole, mounted])
+  }, [userRole])
 
   const handleBackToAccountType = () => {
     // The sidebar AccountTypeSelector allows clicking a different role
@@ -51,16 +45,8 @@ export function Dashboard() {
     enabled: true,
   })
 
-  if (!mounted) {
-    return (
-      <div className="flex min-h-screen bg-gradient-to-br from-background via-slate-50 to-background dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-        <div className="flex-1" />
-      </div>
-    )
-  }
-
   return (
-    <div suppressHydrationWarning className="flex min-h-screen bg-gradient-to-br from-background via-slate-50 to-background dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex min-h-screen bg-gradient-to-br from-background via-slate-50 to-background dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userRole={userRole} setUserRole={setUserRole} />
 
