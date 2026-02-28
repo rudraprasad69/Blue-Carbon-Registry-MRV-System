@@ -10,6 +10,7 @@
 import { WebSocketServer, WebSocket } from 'ws'
 import { getCarbonMarketService } from './carbon-market-service'
 import { getHistoricalService } from './historical-analysis-service'
+import { SensorStreamSimulator, mockSensorNetwork } from './iot-sensor-service'
 
 interface ClientSubscription {
   clientId: string
@@ -18,7 +19,7 @@ interface ClientSubscription {
 }
 
 interface MarketUpdate {
-  type: 'price_update' | 'order_executed' | 'market_metrics' | 'prediction_update'
+  type: 'price_update' | 'order_executed' | 'market_metrics' | 'prediction_update' | 'sensor_data'
   data: any
   timestamp: string
 }
@@ -29,6 +30,7 @@ class CarbonRegistryWebSocketServer {
   private updateInterval: NodeJS.Timeout | null = null
   private marketService = getCarbonMarketService()
   private historicalService = getHistoricalService()
+  private sensorStreamers: Map<string, SensorStreamSimulator> = new Map()
 
   constructor(port: number = 3001) {
     this.wss = new WebSocketServer({ port })
@@ -77,7 +79,7 @@ class CarbonRegistryWebSocketServer {
       this.sendToClient(ws, {
         type: 'connection_established',
         clientId,
-        supportedChannels: ['price_updates', 'market_metrics', 'predictions', 'orders', 'alerts'],
+        supportedChannels: ['price_updates', 'market_metrics', 'predictions', 'orders', 'alerts', 'sensor_data'],
       })
     })
 
@@ -121,7 +123,12 @@ class CarbonRegistryWebSocketServer {
     const subscription = this.clients.get(clientId)
     if (!subscription) return
 
-    channels.forEach((channel) => subscription.channels.add(channel))
+    channels.forEach((channel) => {
+        subscription.channels.add(channel)
+        if (channel === 'sensor_data') {
+            this.startSensorStream();
+        }
+    })
 
     this.sendToClient(ws, {
       type: 'subscription_confirmed',
@@ -208,6 +215,22 @@ class CarbonRegistryWebSocketServer {
     }, 30000)
   }
 
+  private startSensorStream() {
+    if (this.sensorStreamers.size > 0) return; // Already streaming
+
+    mockSensorNetwork.forEach(sensor => {
+        const streamer = new SensorStreamSimulator();
+        streamer.onReading(reading => {
+            this.broadcastToChannel('sensor_data', {
+                type: 'sensor_data',
+                data: reading
+            });
+        });
+        streamer.startStream(sensor, 5000); // Stream data every 5 seconds
+        this.sensorStreamers.set(sensor.id, streamer);
+    });
+  }
+
   private broadcastToChannel(channel: string, message: any) {
     this.clients.forEach((subscription, clientId) => {
       if (subscription.channels.has(channel)) {
@@ -246,6 +269,7 @@ class CarbonRegistryWebSocketServer {
     if (this.updateInterval) {
       clearInterval(this.updateInterval)
     }
+    this.sensorStreamers.forEach(streamer => streamer.stopStream());
     if (this.wss) {
       this.wss.close()
       console.log('WebSocket server stopped')

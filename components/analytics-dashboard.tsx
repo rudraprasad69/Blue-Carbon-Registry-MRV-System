@@ -6,11 +6,19 @@ import { CreditsIssuedAnalysis } from "./credits-issued-analysis"
 import { ImpactMetrics } from "./impact-metrics"
 import { MarketIntelligence } from "./market-intelligence"
 import { PortfolioAnalytics } from "./portfolio-analytics"
+import { AiProjectAssistant } from "./ai-project-assistant"
+import { AnomalyDetectionViewer } from "./anomaly-detection-viewer"
 import { TrendingUp, Leaf, Users, Target } from "lucide-react"
 
 export function AnalyticsDashboard() {
   return (
     <div className="space-y-8">
+      {/* AI Project Assistant */}
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-4">AI Project Assistant</h2>
+        <AiProjectAssistant />
+      </div>
+      
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-border">
@@ -82,6 +90,12 @@ export function AnalyticsDashboard() {
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-4">Environmental Impact Trends</h2>
         <ImpactMetrics />
+      </div>
+
+      {/* Anomaly Detection */}
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Anomaly Detection</h2>
+        <AnomalyDetectionViewer />
       </div>
 
       {/* Market Intelligence */}

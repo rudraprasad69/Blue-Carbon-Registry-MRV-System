@@ -1,16 +1,24 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { getCarbonMarketService, type CreditPrice, type MarketMetrics } from '@/lib/carbon-market-service'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import type { CreditPrice, MarketMetrics } from '@/lib/carbon-market-service'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 
 interface MarketAnalyticsDashboardProps {
-  refreshInterval?: number
   showPriceHistory?: boolean
   showVolume?: boolean
 }
 
 export function MarketAnalyticsDashboard({
-  refreshInterval = 60000,
   showPriceHistory = true,
   showVolume = true,
 }: MarketAnalyticsDashboardProps) {
@@ -18,20 +26,43 @@ export function MarketAnalyticsDashboard({
   const [priceHistory, setPriceHistory] = useState<CreditPrice[]>([])
   const [currentPrice, setCurrentPrice] = useState<CreditPrice | null>(null)
   const [loading, setLoading] = useState(true)
+  const ws = useWebSocket({ autoConnect: true })
 
   useEffect(() => {
-    loadMarketData()
-    const interval = setInterval(loadMarketData, refreshInterval)
-    return () => clearInterval(interval)
-  }, [refreshInterval])
+    if (ws.isConnected) {
+      ws.subscribe(['price_updates', 'market_metrics'])
+      ws.getMarketMetrics()
+      ws.getCurrentPrice()
+    }
+  }, [ws.isConnected, ws])
 
-  function loadMarketData() {
-    const marketService = getCarbonMarketService()
-    setMetrics(marketService.getMarketMetrics())
-    setCurrentPrice(marketService.getCurrentPrice())
-    setPriceHistory(marketService.getPriceHistory(30))
-    setLoading(false)
-  }
+  useEffect(() => {
+    const unsubscribe = ws.onMessage((msg) => {
+      switch (msg.type) {
+        case 'price_update':
+        case 'price_data':
+          setCurrentPrice(msg.data)
+          setPriceHistory((prev) => {
+            const newHistory = [...prev, msg.data]
+            return newHistory.slice(-30) // Keep history to a reasonable length
+          })
+          if (loading) setLoading(false)
+          break
+        case 'market_metrics':
+          setMetrics(msg.data)
+          if (loading) setLoading(false)
+          break
+      }
+    })
+    return unsubscribe
+  }, [ws, loading])
+
+  const chartData = useMemo(() => {
+    return priceHistory.map((p) => ({
+      ...p,
+      timestamp: new Date(p.timestamp).toLocaleDateString(),
+    }))
+  }, [priceHistory])
 
   if (loading || !metrics || !currentPrice) {
     return (
@@ -47,7 +78,7 @@ export function MarketAnalyticsDashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-blue-900 to-emerald-900 rounded-lg border border-blue-700 p-6">
+      <div className="bg-gradient-to-r from-blue-900 to-emerald-900 rounded-lg border border-blue-700 p-6">
         <h1 className="text-3xl font-bold text-white mb-2">💱 Carbon Market Analytics</h1>
         <p className="text-blue-200">Real-time market data and trading insights</p>
       </div>
@@ -74,7 +105,11 @@ export function MarketAnalyticsDashboard({
             <div
               className="bg-emerald-600 h-1 rounded"
               style={{
-                width: `${((currentPrice.priceUSD - metrics.priceLow) / (metrics.priceHigh - metrics.priceLow)) * 100}%`,
+                width: `${
+                  ((currentPrice.priceUSD - metrics.priceLow) /
+                    (metrics.priceHigh - metrics.priceLow)) *
+                  100
+                }%`,
               }}
             />
           </div>
@@ -92,9 +127,15 @@ export function MarketAnalyticsDashboard({
         {/* Volatility */}
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
           <p className="text-slate-400 text-sm mb-2">Volatility</p>
-          <p className="text-3xl font-bold text-orange-400">{(metrics.volatility * 100).toFixed(2)}%</p>
+          <p className="text-3xl font-bold text-orange-400">
+            {(metrics.volatility * 100).toFixed(2)}%
+          </p>
           <div className="mt-3 flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${metrics.volatility > 1 ? 'bg-red-500' : 'bg-yellow-500'}`} />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                metrics.volatility > 1 ? 'bg-red-500' : 'bg-yellow-500'
+              }`}
+            />
             <p className="text-xs text-slate-400">
               {metrics.volatility > 1 ? 'High volatility' : 'Moderate volatility'}
             </p>
@@ -108,14 +149,18 @@ export function MarketAnalyticsDashboard({
           {/* Buy Volume */}
           <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
             <p className="text-slate-400 text-sm mb-3">Buy Volume (24h)</p>
-            <p className="text-2xl font-bold text-green-400">{metrics.buyVolume.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-400">
+              {metrics.buyVolume.toLocaleString()}
+            </p>
             <p className="text-xs text-slate-500 mt-2">Credits purchased</p>
           </div>
 
           {/* Sell Volume */}
           <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
             <p className="text-slate-400 text-sm mb-3">Sell Volume (24h)</p>
-            <p className="text-2xl font-bold text-red-400">{metrics.sellVolume.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-red-400">
+              {metrics.sellVolume.toLocaleString()}
+            </p>
             <p className="text-xs text-slate-500 mt-2">Credits sold</p>
           </div>
 
@@ -145,57 +190,48 @@ export function MarketAnalyticsDashboard({
       {showPriceHistory && priceHistory.length > 0 && (
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-white mb-4">30-Day Price Trend</h3>
-
-          {/* Simple bar chart representation */}
-          <div className="flex items-end justify-between gap-1 h-32">
-            {priceHistory.map((price, idx) => {
-              const minPrice = Math.min(...priceHistory.map((p) => p.priceUSD))
-              const maxPrice = Math.max(...priceHistory.map((p) => p.priceUSD))
-              const range = maxPrice - minPrice
-              const height = range === 0 ? 50 : ((price.priceUSD - minPrice) / range) * 100
-
-              return (
-                <div
-                  key={idx}
-                  className="flex-1 bg-blue-600/50 hover:bg-blue-600 rounded-t transition-colors group relative"
-                  style={{ height: `${Math.max(height, 10)}%` }}
-                >
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-800 px-2 py-1 rounded text-xs text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    ${price.priceUSD.toFixed(2)}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="flex justify-between mt-4 text-xs text-slate-500">
-            <span>30 days ago</span>
-            <span>Today</span>
-          </div>
-
-          {/* Price range info */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-700">
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Min</p>
-              <p className="text-white font-semibold">
-                ${Math.min(...priceHistory.map((p) => p.priceUSD)).toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Avg</p>
-              <p className="text-white font-semibold">
-                $
-                {(
-                  priceHistory.reduce((sum, p) => sum + p.priceUSD, 0) / priceHistory.length
-                ).toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Max</p>
-              <p className="text-white font-semibold">
-                ${Math.max(...priceHistory.map((p) => p.priceUSD)).toFixed(2)}
-              </p>
-            </div>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart
+                data={chartData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="timestamp"
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    borderColor: '#334155',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="priceUSD"
+                  stroke="#3b82f6"
+                  fillOpacity={1}
+                  fill="url(#colorPrice)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
@@ -220,7 +256,9 @@ export function MarketAnalyticsDashboard({
           <div>
             <p className="text-slate-400 text-sm">Buy/Sell Ratio</p>
             <p className="text-white font-semibold">
-              {metrics.sellVolume > 0 ? (metrics.buyVolume / metrics.sellVolume).toFixed(2) : 'N/A'}
+              {metrics.sellVolume > 0
+                ? (metrics.buyVolume / metrics.sellVolume).toFixed(2)
+                : 'N/A'}
             </p>
           </div>
           <div>

@@ -11,17 +11,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useWebSocket } from '@/hooks/useWebSocket'
 import {
-  getMqttSensorClient,
-  type AggregatedSensorReading,
   type SensorData,
   type SensorLocation,
 } from '@/lib/mqtt-sensor-service'
 
 interface SensorMonitoringDashboardProps {
   projectId: string
-  autoRefresh?: boolean
-  refreshInterval?: number
   onAnomalyDetected?: (anomalies: SensorData[]) => void
 }
 
@@ -145,11 +142,8 @@ const TimeSeriesChart = ({ title, data }: { title: string; data: number[] }) => 
 
 export function SensorMonitoringDashboard({
   projectId,
-  autoRefresh = true,
-  refreshInterval = 5000,
   onAnomalyDetected,
 }: SensorMonitoringDashboardProps) {
-  const [reading, setReading] = useState<AggregatedSensorReading | null>(null)
   const [sensors, setSensors] = useState<SensorData[]>([])
   const [locations, setLocations] = useState<SensorLocation[]>([])
   const [loading, setLoading] = useState(true)
@@ -157,60 +151,49 @@ export function SensorMonitoringDashboard({
   const [selectedSensorType, setSelectedSensorType] = useState<string | null>(null)
   const [temperatureHistory, setTemperatureHistory] = useState<number[]>([])
   const [humidityHistory, setHumidityHistory] = useState<number[]>([])
-
-  const loadSensorData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const client = getMqttSensorClient()
-      await client.connect()
-
-      // Subscribe to sensor data
-      await client.subscribe('sensors/+/data', () => {
-        const aggregated = client.getAggregatedReadings()
-        setReading(aggregated)
-
-        // Update sensor list
-        const sensorArray = Object.values(aggregated.sensors)
-        setSensors(sensorArray)
-
-        // Track anomalies
-        const anomalies = sensorArray.filter(
-          (s) => s.status === 'warning' || s.status === 'error'
-        )
-        if (anomalies.length > 0) {
-          onAnomalyDetected?.(anomalies)
-        }
-
-        // Update history (keep last 20 readings)
-        setTemperatureHistory((prev) => [
-          ...prev.slice(-19),
-          aggregated.summary.averageTemperature,
-        ])
-        setHumidityHistory((prev) => [
-          ...prev.slice(-19),
-          aggregated.summary.averageHumidity,
-        ])
-      })
-
-      // Get sensor locations
-      setLocations(client.getSensorLocations())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sensor data')
-    } finally {
-      setLoading(false)
-    }
-  }, [onAnomalyDetected])
+  const ws = useWebSocket({ autoConnect: true });
 
   useEffect(() => {
-    loadSensorData()
-
-    if (autoRefresh) {
-      const interval = setInterval(loadSensorData, refreshInterval)
-      return () => clearInterval(interval)
+    if (ws.isConnected) {
+      ws.subscribe(['sensor_data']);
+      setLoading(false);
     }
-  }, [loadSensorData, autoRefresh, refreshInterval])
+  }, [ws.isConnected, ws.subscribe]);
+
+  useEffect(() => {
+    const unsubscribe = ws.onMessage((msg) => {
+      if (msg.type === 'sensor_data') {
+        const newSensorData = msg.data as SensorData;
+        setSensors(prevSensors => {
+            const index = prevSensors.findIndex(s => s.sensorId === newSensorData.sensorId);
+            if (index > -1) {
+                const newSensors = [...prevSensors];
+                newSensors[index] = newSensorData;
+                return newSensors;
+            }
+            return [...prevSensors, newSensorData];
+        });
+      }
+    });
+    return unsubscribe;
+  }, [ws.onMessage]);
+
+  const filteredSensors = selectedSensorType
+    ? sensors.filter((s) => s.sensorType === selectedSensorType)
+    : sensors;
+
+  const warnings = sensors.filter((s) => s.status === 'warning').length
+  const errors = sensors.filter((s) => s.status === 'error').length
+
+  const summary = {
+    averageTemperature: sensors.filter(s => s.sensorType === 'temperature').reduce((acc, s) => acc + s.value, 0) / (sensors.filter(s => s.sensorType === 'temperature').length || 1),
+    averageHumidity: sensors.filter(s => s.sensorType === 'humidity').reduce((acc, s) => acc + s.value, 0) / (sensors.filter(s => s.sensorType === 'humidity').length || 1),
+    averageSoilMoisture: sensors.filter(s => s.sensorType === 'soilMoisture').reduce((acc, s) => acc + s.value, 0) / (sensors.filter(s => s.sensorType === 'soilMoisture').length || 1),
+    averageCO2: sensors.filter(s => s.sensorType === 'co2').reduce((acc, s) => acc + s.value, 0) / (sensors.filter(s => s.sensorType === 'co2').length || 1),
+    offlineSensorCount: sensors.filter(s => s.battery < 10).length,
+    alertCount: warnings + errors,
+  };
+
 
   if (loading) {
     return (
@@ -218,36 +201,23 @@ export function SensorMonitoringDashboard({
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="animate-spin text-4xl">📡</div>
           <p className="text-slate-300">Connecting to sensor network...</p>
-          <p className="text-slate-500 text-sm">Setting up MQTT stream</p>
+          <p className="text-slate-500 text-sm">Establishing WebSocket connection</p>
         </div>
       </div>
     )
   }
-
-  if (error || !reading) {
+  
+    if (error) {
     return (
       <div className="bg-slate-900 rounded-lg border border-red-500/30 p-8">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-2xl">⚠️</span>
           <p className="text-red-400 font-semibold">Connection Error</p>
         </div>
-        <p className="text-slate-400 mb-4">{error || 'Failed to connect to sensors'}</p>
-        <button
-          onClick={loadSensorData}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          Retry Connection
-        </button>
+        <p className="text-slate-400 mb-4">{error}</p>
       </div>
     )
   }
-
-  const filteredSensors = selectedSensorType
-    ? sensors.filter((s) => s.sensorType === selectedSensorType)
-    : sensors
-
-  const warnings = sensors.filter((s) => s.status === 'warning').length
-  const errors = sensors.filter((s) => s.status === 'error').length
 
   return (
     <div className="space-y-6">
@@ -261,7 +231,11 @@ export function SensorMonitoringDashboard({
               {sensors.length} sensors • {locations.length} locations
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 text-sm ${ws.isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                <div className={`w-2 h-2 rounded-full ${ws.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                {ws.isConnected ? 'Live' : 'Disconnected'}
+            </div>
             <AlertBadge count={warnings} type="warning" />
             <AlertBadge count={errors} type="error" />
           </div>
@@ -272,25 +246,25 @@ export function SensorMonitoringDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <SensorSummaryCard
           label="Temperature"
-          value={reading.summary.averageTemperature}
+          value={summary.averageTemperature}
           unit="°C"
           icon="🌡️"
         />
         <SensorSummaryCard
           label="Humidity"
-          value={reading.summary.averageHumidity}
+          value={summary.averageHumidity}
           unit="%"
           icon="💧"
         />
         <SensorSummaryCard
           label="Soil Moisture"
-          value={reading.summary.averageSoilMoisture}
+          value={summary.averageSoilMoisture}
           unit="%"
           icon="🌱"
         />
         <SensorSummaryCard
           label="CO₂ Level"
-          value={reading.summary.averageCO2}
+          value={summary.averageCO2}
           unit="ppm"
           icon="🔬"
         />
@@ -354,11 +328,10 @@ export function SensorMonitoringDashboard({
       {/* Status Footer */}
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-slate-500 space-y-2">
         <p>
-          Last updated: {new Date(reading.timestamp).toLocaleString()} • Auto-refresh: every{' '}
-          {(refreshInterval / 1000).toFixed(0)}s
+          Last updated: {new Date().toLocaleString()}
         </p>
         <p>
-          Offline sensors: {reading.summary.offlineSensorCount} • Active alerts: {reading.summary.alertCount}
+          Offline sensors: {summary.offlineSensorCount} • Active alerts: {summary.alertCount}
         </p>
       </div>
     </div>

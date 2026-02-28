@@ -1,13 +1,34 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { auditLogger } from "@/lib/audit-logger"
-import { CheckCircle, AlertCircle, Clock } from "lucide-react"
+import { AuditLog } from "@/lib/audit-logger"
+import { CheckCircle, AlertCircle, Clock, User, Code } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function AuditLogViewer() {
-  const logs = auditLogger.getLogs()
-  const stats = auditLogger.getStats()
+  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const response = await fetch('/api/audit-trail')
+        if (!response.ok) {
+          throw new Error('Failed to fetch audit logs')
+        }
+        const data = await response.json()
+        setLogs(data)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLogs()
+  }, [])
 
   const getActionColor = (action: string) => {
     switch (action) {
@@ -17,6 +38,10 @@ export function AuditLogViewer() {
         return "bg-blue-100/20 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
       case "update":
         return "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+      case "create":
+        return "bg-purple-100/20 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400"
+      case "delete":
+        return "bg-red-100/20 text-red-700 dark:bg-red-900/20 dark:text-red-400"
       default:
         return "bg-gray-100/20 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400"
     }
@@ -30,69 +55,62 @@ export function AuditLogViewer() {
     )
   }
 
+  const renderLogs = () => {
+    if (loading) {
+      return Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
+    }
+    if (error) {
+      return <p className="text-sm text-red-500 text-center py-8">{error}</p>
+    }
+    if (logs.length === 0) {
+      return <p className="text-sm text-muted-foreground text-center py-8">No audit logs yet</p>
+    }
+    return logs
+      .slice()
+      .reverse()
+      .map((log) => (
+        <div key={log.id} className="p-4 border rounded-lg hover:shadow-sm transition-shadow">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              {getStatusIcon(log.status)}
+              <div>
+                <p className="font-semibold">{log.action.charAt(0).toUpperCase() + log.action.slice(1)} {log.entityType}</p>
+                <p className="text-xs text-muted-foreground">ID: {log.entityId}</p>
+              </div>
+            </div>
+            <Badge className={getActionColor(log.action)}>{log.action}</Badge>
+          </div>
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <User className="w-3 h-3" />
+              <span>User: <span className="font-medium text-foreground">{log.userId}</span></span>
+            </div>
+            {log.details && <p className="text-xs">{log.details}</p>}
+            {log.changes && Object.keys(log.changes).length > 0 && (
+                <div className="flex items-start gap-2 pt-1">
+                    <Code className="w-3 h-3 mt-0.5" />
+                    <pre className="text-xs bg-muted/50 p-2 rounded-md"><code>{JSON.stringify(log.changes, null, 2)}</code></pre>
+                </div>
+            )}
+            <div className="flex items-center gap-2 pt-2">
+              <Clock className="w-3 h-3" />
+              <span>{new Date(log.timestamp).toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      ))
+  }
+
   return (
     <div className="space-y-6">
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Total Actions</p>
-            <p className="text-3xl font-bold">{stats.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Success Rate</p>
-            <p className="text-3xl font-bold text-green-600">{stats.successRate}%</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Successful</p>
-            <p className="text-3xl font-bold text-green-600">{stats.successful}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Failed</p>
-            <p className="text-3xl font-bold text-red-600">{stats.failed}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Audit Logs */}
       <Card>
         <CardHeader>
-          <CardTitle>Audit Trail</CardTitle>
-          <CardDescription>Complete record of all system actions and changes</CardDescription>
+          <CardTitle>System Audit Trail</CardTitle>
+          <CardDescription>A complete, immutable record of all system actions and changes.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {logs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No audit logs yet</p>
-            ) : (
-              logs
-                .slice(-20)
-                .reverse()
-                .map((log) => (
-                  <div key={log.id} className="p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(log.status)}
-                        <div>
-                          <p className="text-sm font-semibold">{log.action.toUpperCase()}</p>
-                          <p className="text-xs text-muted-foreground">{log.entityType}</p>
-                        </div>
-                      </div>
-                      <Badge className={getActionColor(log.action)}>{log.action}</Badge>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {new Date(log.timestamp).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-            )}
+          <div className="space-y-4 max-h-[40rem] overflow-y-auto pr-2">
+            {renderLogs()}
           </div>
         </CardContent>
       </Card>
