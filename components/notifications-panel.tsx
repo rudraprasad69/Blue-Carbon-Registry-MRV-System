@@ -1,13 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { mockNotifications } from "@/lib/mock-data"
+import { formatDateTimeConsistent } from "@/lib/date-utils"
 
 export function NotificationsPanel() {
   const [notifications, setNotifications] = useState(mockNotifications)
+  const [isClient, setIsClient] = useState(false)
   const unreadCount = notifications.filter((n) => !n.read).length
+
+  // Ensure client-side rendering to avoid hydration mismatches
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleMarkAsRead = (id: string) => {
     setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
@@ -28,6 +35,11 @@ export function NotificationsPanel() {
       default:
         return "bg-muted"
     }
+  }
+
+  // Format date consistently across server and client
+  const formatDate = (date: Date | string) => {
+    return formatDateTimeConsistent(date)
   }
 
   return (
@@ -70,8 +82,7 @@ export function NotificationsPanel() {
                       <p className="font-semibold text-sm text-foreground">{notif.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">{notif.message}</p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(notif.timestamp).toLocaleDateString()} at{" "}
-                        {new Date(notif.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {isClient ? formatDate(notif.timestamp) : "Loading..."}
                       </p>
                     </div>
                   </div>
