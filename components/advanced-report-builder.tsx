@@ -21,7 +21,7 @@ export function AdvancedReportBuilder({
   estimatedCredits = 0,
   onExportComplete
 }: AdvancedReportBuilderProps) {
-  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'csv' | 'json' | 'excel' | 'xml'>('pdf')
+  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'csv' | 'json' | 'excel'>('pdf')
   const [includeCharts, setIncludeCharts] = useState(true)
   const [includeRecommendations, setIncludeRecommendations] = useState(true)
   const [includeSatelliteImages, setIncludeSatelliteImages] = useState(false)
@@ -68,9 +68,6 @@ export function AdvancedReportBuilder({
         case 'excel':
           result = await exportService.exportToExcel(analysisData, reportMetadata, options)
           break
-        case 'xml':
-          result = await exportService.exportToXML(analysisData, reportMetadata, options)
-          break
         case 'pdf':
         default:
           result = await exportService.exportToPDF(analysisData, reportMetadata, options)
@@ -109,8 +106,8 @@ export function AdvancedReportBuilder({
       {/* Format Selection */}
       <div className="space-y-3">
         <label className="block text-slate-300 text-sm font-medium">Export Format</label>
-        <div className="grid grid-cols-3 gap-3">
-          {(['pdf', 'csv', 'json', 'excel', 'xml'] as const).map((format) => (
+        <div className="grid grid-cols-2 gap-3">
+          {(['pdf', 'csv', 'json', 'excel'] as const).map((format) => (
             <button
               key={format}
               onClick={() => setSelectedFormat(format)}
@@ -124,7 +121,6 @@ export function AdvancedReportBuilder({
               {format === 'csv' && '📋 CSV'}
               {format === 'json' && '{ } JSON'}
               {format === 'excel' && '📊 Excel'}
-              {format === 'xml' && '🗂️ XML'}
             </button>
           ))}
         </div>
@@ -265,13 +261,6 @@ export function AdvancedReportBuilder({
             <li>✓ Multi-sheet Excel workbook</li>
             <li>✓ Formatted tables and analysis sections</li>
             <li>✓ Built-in charts and formulas</li>
-          </ul>
-        )}
-        {selectedFormat === 'xml' && (
-          <ul className="space-y-1">
-            <li>✓ Extensible Markup Language format</li>
-            <li>✓ Machine-readable and human-readable</li>
-            <li>✓ Good for data exchange between systems</li>
           </ul>
         )}
       </div>

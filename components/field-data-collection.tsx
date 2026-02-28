@@ -1,18 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { mockFieldDataCollections } from "@/lib/mock-data"
-import { CheckCircle, Calendar, User, PlusCircle } from "lucide-react"
+import { CheckCircle, Calendar, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { FieldDataForm } from "./field-data-form"
-import { useMobile } from "@/hooks/use-mobile"
 
 export function FieldDataCollection() {
-  const [showForm, setShowForm] = useState(false)
-  const isMobile = useMobile()
-
   const getHealthStatusColor = (status: string) => {
     switch (status) {
       case "Healthy":
@@ -26,21 +19,11 @@ export function FieldDataCollection() {
     }
   }
 
-  if (showForm) {
-    return <FieldDataForm onFormSubmit={() => setShowForm(false)} />
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Field Data Collections</h2>
-          <p className="text-muted-foreground mt-1">Recent environmental monitoring data from field sites</p>
-        </div>
-        <Button onClick={() => setShowForm(true)} className={isMobile ? "w-full" : ""}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Data
-        </Button>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Field Data Collections</h2>
+        <p className="text-muted-foreground mt-1">Recent environmental monitoring data from field sites</p>
       </div>
 
       <div className="space-y-4">

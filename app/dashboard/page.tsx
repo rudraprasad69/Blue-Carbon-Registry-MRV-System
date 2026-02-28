@@ -10,9 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('market')
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    setIsLoading(false)
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-green-800 to-slate-900 p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-green-900 to-slate-900 p-6 space-y-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-2">Carbon Analytics Dashboard</h1>
