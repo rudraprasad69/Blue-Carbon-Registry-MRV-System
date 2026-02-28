@@ -42,23 +42,33 @@ export function NotificationsPanel() {
     return formatDateTimeConsistent(date)
   }
 
+  // Render placeholder on server to avoid hydration mismatch
+  if (!isClient) {
+    return (
+      <button className="relative p-2 rounded-lg" disabled>
+        <Bell className="w-5 h-5 text-foreground" />
+        {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-slate-500 rounded-full"></span>}
+      </button>
+    )
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative p-2 hover:bg-muted rounded-lg transition-colors">
+        <button className="relative p-2 rounded-lg">
           <Bell className="w-5 h-5 text-foreground" />
-          {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+          {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-slate-500 rounded-full"></span>}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
-        <div className="border-b border-border px-4 py-3 flex items-center justify-between">
+          <div className="border-b border-border px-3 py-2 flex items-center justify-between">
           <h3 className="font-semibold text-foreground">
             Notifications {unreadCount > 0 && <span className="text-xs text-accent">({unreadCount})</span>}
           </h3>
-          {notifications.length > 0 && (
+            {notifications.length > 0 && (
             <button
               onClick={handleClear}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-muted-foreground"
             >
               Clear all
             </button>
@@ -71,12 +81,12 @@ export function NotificationsPanel() {
               {notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${!notif.read ? "bg-accent/5" : ""}`}
+                  className={`p-3 cursor-pointer ${!notif.read ? "bg-accent/5" : ""}`}
                   onClick={() => handleMarkAsRead(notif.id)}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2">
                     <div
-                      className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${!notif.read ? "bg-accent" : "bg-transparent"}`}
+                      className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${!notif.read ? "bg-slate-500" : "bg-transparent"}`}
                     ></div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-foreground">{notif.title}</p>

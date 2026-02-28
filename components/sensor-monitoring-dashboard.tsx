@@ -53,32 +53,32 @@ const SensorCard = ({ sensor, threshold }: { sensor: SensorData; threshold?: Rec
   }
 
   return (
-    <div className={`${getStatusColor()} rounded-lg p-4 border border-opacity-20 border-white shadow-lg`} style={{backgroundImage: `linear-gradient(to bottom right, ${getStatusColor().includes('red') ? 'rgb(239, 68, 68), rgb(220, 38, 38)' : getStatusColor().includes('yellow') ? 'rgb(234, 179, 8), rgb(202, 138, 4)' : 'rgb(34, 197, 94), rgb(22, 163, 74)'})`}}>
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <p className="text-sm opacity-80">
+    <div className={`${getStatusColor()} rounded-lg p-3 sm:p-4 border border-opacity-20 border-white shadow-lg h-full flex flex-col`} style={{backgroundImage: `linear-gradient(to bottom right, ${getStatusColor().includes('red') ? 'rgb(239, 68, 68), rgb(220, 38, 38)' : getStatusColor().includes('yellow') ? 'rgb(234, 179, 8), rgb(202, 138, 4)' : 'rgb(34, 197, 94), rgb(22, 163, 74)'})`}}>
+      <div className="flex justify-between items-start mb-2 sm:mb-3 gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm opacity-80">
             {sensor.sensorId}
           </p>
-          <p className="text-2xl font-bold">{sensor.value.toFixed(2)}</p>
-          <p className="text-sm opacity-80">{sensor.unit}</p>
+          <p className="text-xl sm:text-2xl font-bold leading-tight">{sensor.value.toFixed(2)}</p>
+          <p className="text-xs sm:text-sm opacity-80">{sensor.unit}</p>
         </div>
-        <span className="text-3xl">{getIcon()}</span>
+        <span className="text-2xl sm:text-3xl flex-shrink-0">{getIcon()}</span>
       </div>
 
-      <div className="space-y-2 text-xs opacity-80">
-        <div className="flex justify-between">
-          <span>Signal: {sensor.rssi} dBm</span>
-          <span>Battery: {sensor.battery}%</span>
+      <div className="space-y-1 sm:space-y-2 text-xs opacity-80 flex-1">
+        <div className="flex justify-between gap-1 flex-wrap">
+          <span>Signal: {sensor.rssi}dBm</span>
+          <span className="flex-shrink-0">Bat: {sensor.battery}%</span>
         </div>
-        <div className="flex justify-between">
-          <span>Quality: {sensor.quality}%</span>
-          <span>{new Date(sensor.timestamp).toLocaleTimeString()}</span>
+        <div className="flex justify-between gap-1 flex-wrap">
+          <span>Q: {sensor.quality}%</span>
+          <span className="flex-shrink-0 whitespace-nowrap">{new Date(sensor.timestamp).toLocaleTimeString()}</span>
         </div>
       </div>
 
       {sensor.battery < 20 && (
-        <div className="mt-3 p-2 bg-red-500/30 rounded text-xs border border-red-400/50">
-          ⚠️ Low battery warning
+        <div className="mt-2 sm:mt-3 p-1.5 sm:p-2 bg-red-500/30 rounded text-xs border border-red-400/50">
+          ⚠️ Low battery
         </div>
       )}
     </div>
@@ -99,39 +99,40 @@ const AlertBadge = ({ count, type }: { count: number; type: 'warning' | 'error' 
 }
 
 const SensorSummaryCard = ({ label, value, unit, icon }: { label: string; value: number; unit: string; icon: string }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-    <div className="flex justify-between items-start mb-2">
-      <div>
-        <p className="text-slate-400 text-sm">{label}</p>
-        <p className="text-3xl font-bold text-white">{value.toFixed(1)}</p>
+  <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4 h-full">
+    <div className="flex justify-between items-start gap-1.5">
+      <div className="flex justify-between items-start gap-2">
+      <div className="flex-1 min-w-0">
+        <p className="text-slate-400 text-xs sm:text-sm">{label}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-white leading-tight">{value.toFixed(1)}</p>
         <p className="text-slate-500 text-xs">{unit}</p>
       </div>
-      <span className="text-3xl">{icon}</span>
+      <span className="text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
     </div>
   </div>
 )
 
 const SensorLocationMap = ({ sensors }: { sensors: SensorLocation[] }) => (
-  <div className="bg-slate-900 rounded-lg border border-slate-700 p-6 h-96">
-    <p className="text-slate-400 text-sm mb-4">🗺️ Sensor Network Map</p>
+  <div className="bg-slate-900 rounded-lg border border-slate-700 p-4 sm:p-6 min-h-56 sm:h-80">
+    <p className="text-slate-400 text-sm mb-3 sm:mb-4">🗺️ Sensor Network Map</p>
     <div className="w-full h-full rounded-lg flex items-center justify-center border border-slate-700" style={{backgroundImage: 'linear-gradient(to bottom right, rgb(30, 41, 59), rgb(15, 23, 42))'}}>
-      <div className="text-center">
-        <div className="text-5xl mb-3">🛰️</div>
-        <p className="text-slate-400">{sensors.length} sensors active</p>
-        <p className="text-slate-600 text-sm mt-2">Geographic distribution</p>
+      <div className="text-center px-4">
+        <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">🛰️</div>
+        <p className="text-slate-400 text-sm sm:text-base">{sensors.length} sensors active</p>
+        <p className="text-slate-600 text-xs sm:text-sm mt-2">Geographic distribution</p>
       </div>
     </div>
   </div>
 )
 
 const TimeSeriesChart = ({ title, data }: { title: string; data: number[] }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-    <p className="text-slate-400 text-sm mb-3">{title}</p>
-    <div className="w-full h-32 bg-slate-900 rounded flex items-end justify-around gap-1 p-2 border border-slate-700">
+  <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4">
+    <p className="text-slate-400 text-xs sm:text-sm mb-2 sm:mb-3 truncate">{title}</p>
+    <div className="w-full h-24 sm:h-32 bg-slate-900 rounded flex items-end justify-around gap-0.5 sm:gap-1 p-2 border border-slate-700">
       {data.map((value, idx) => (
         <div
           key={idx}
-          className="flex-1 rounded-t-lg opacity-70 hover:opacity-100 transition-opacity"
+          className="flex-1 rounded-t-lg min-h-1 opacity-80"
           style={{ height: `${(value / Math.max(...data, 100)) * 100}%`, backgroundImage: 'linear-gradient(to top, rgb(59, 130, 246), rgb(96, 165, 250))' }}
           title={value.toFixed(1)}
         />
@@ -197,11 +198,11 @@ export function SensorMonitoringDashboard({
 
   if (loading) {
     return (
-      <div className="bg-slate-900 rounded-lg border border-slate-700 p-8">
+      <div className="bg-slate-900 rounded-lg border border-slate-700 p-6 sm:p-8">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="animate-spin text-4xl">📡</div>
-          <p className="text-slate-300">Connecting to sensor network...</p>
-          <p className="text-slate-500 text-sm">Establishing WebSocket connection</p>
+          <div className="text-3xl sm:text-4xl">📡</div>
+          <p className="text-slate-300 text-sm sm:text-base text-center">Connecting to sensor network...</p>
+          <p className="text-slate-500 text-xs sm:text-sm text-center">Establishing WebSocket connection</p>
         </div>
       </div>
     )
@@ -209,7 +210,7 @@ export function SensorMonitoringDashboard({
   
     if (error) {
     return (
-      <div className="bg-slate-900 rounded-lg border border-red-500/30 p-8">
+      <div className="bg-slate-900 rounded-lg border border-red-500/30 p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-2xl">⚠️</span>
           <p className="text-red-400 font-semibold">Connection Error</p>
@@ -220,21 +221,24 @@ export function SensorMonitoringDashboard({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-slate-900 rounded-lg border border-slate-700 p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Sensor Network</h2>
-            <p className="text-slate-400 text-sm mt-1">Real-time IoT monitoring</p>
-            <p className="text-slate-500 text-sm">
+      <div className="bg-slate-900 rounded-lg border border-slate-700 p-3 sm:p-4">
+          <div className="bg-slate-900 rounded-lg border border-slate-700 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Sensor Network</h2>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">Real-time IoT monitoring</p>
+            <p className="text-slate-500 text-xs sm:text-sm">
               {sensors.length} sensors • {locations.length} locations
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 text-sm ${ws.isConnected ? 'text-green-400' : 'text-red-400'}`}>
-                <div className={`w-2 h-2 rounded-full ${ws.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                {ws.isConnected ? 'Live' : 'Disconnected'}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end w-full sm:w-auto">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap text-slate-300">
+                <div className="w-2 h-2 rounded-full flex-shrink-0 bg-slate-500" />
+                <span className="hidden sm:inline">{ws.isConnected ? 'Live' : 'Disconnected'}</span>
+                <span className="sm:hidden">{ws.isConnected ? 'On' : 'Off'}</span>
             </div>
             <AlertBadge count={warnings} type="warning" />
             <AlertBadge count={errors} type="error" />
@@ -243,7 +247,7 @@ export function SensorMonitoringDashboard({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <SensorSummaryCard
           label="Temperature"
           value={summary.averageTemperature}
@@ -271,7 +275,7 @@ export function SensorMonitoringDashboard({
       </div>
 
       {/* Time Series Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
         <TimeSeriesChart title="Temperature Trend" data={temperatureHistory} />
         <TimeSeriesChart title="Humidity Trend" data={humidityHistory} />
       </div>
@@ -280,33 +284,34 @@ export function SensorMonitoringDashboard({
       <SensorLocationMap sensors={locations} />
 
       {/* Sensor Type Filter */}
-      <div className="bg-slate-900 rounded-lg border border-slate-700 p-4">
-        <p className="text-slate-400 text-sm mb-3">Filter by Sensor Type</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-slate-900 rounded-lg border border-slate-700 p-3 sm:p-4">
+        <p className="text-slate-400 text-xs sm:text-sm mb-2 sm:mb-3">Filter by Sensor Type</p>
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
             onClick={() => setSelectedSensorType(null)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+            className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap ${
               selectedSensorType === null
                 ? 'bg-blue-600 text-white'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                : 'bg-slate-800 text-slate-300'
             }`}
           >
-            All Sensors ({sensors.length})
+            All ({sensors.length})
           </button>
           {['temperature', 'humidity', 'soilMoisture', 'co2', 'light', 'precipitation'].map((type) => {
             const count = sensors.filter((s) => s.sensorType === type).length
             if (count === 0) return null
+            const typeLabel = type === 'soilMoisture' ? 'Soil' : type.charAt(0).toUpperCase() + type.slice(1)
             return (
               <button
                 key={type}
                 onClick={() => setSelectedSensorType(type)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap ${
                   selectedSensorType === type
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    : 'bg-slate-800 text-slate-300'
                 }`}
               >
-                {type} ({count})
+                {typeLabel} ({count})
               </button>
             )
           })}
@@ -315,10 +320,10 @@ export function SensorMonitoringDashboard({
 
       {/* Sensor Grid */}
       <div>
-        <p className="text-slate-400 text-sm mb-4">
+        <p className="text-slate-400 text-xs sm:text-sm mb-3 sm:mb-4">
           {filteredSensors.length} {selectedSensorType || 'active'} sensor(s)
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {filteredSensors.map((sensor) => (
             <SensorCard key={sensor.sensorId} sensor={sensor} />
           ))}
@@ -326,12 +331,14 @@ export function SensorMonitoringDashboard({
       </div>
 
       {/* Status Footer */}
-      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-slate-500 space-y-2">
-        <p>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4 text-xs sm:text-sm text-slate-500 space-y-1.5 sm:space-y-2">
+        <p className="break-words">
           Last updated: {new Date().toLocaleString()}
         </p>
-        <p>
-          Offline sensors: {summary.offlineSensorCount} • Active alerts: {summary.alertCount}
+        <p className="flex flex-col sm:flex-row gap-1 sm:gap-3">
+          <span>Offline: {summary.offlineSensorCount}</span>
+          <span className="hidden sm:inline">•</span>
+          <span>Alerts: {summary.alertCount}</span>
         </p>
       </div>
     </div>
