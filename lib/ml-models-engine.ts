@@ -70,8 +70,10 @@ class MLModelsEngine {
     }
   }
 
-  private getLastTimestamp(dataPoints: { timestamp: number }[]): number {
-    return dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].timestamp : Date.now()
+  private getLastTimestamp(dataPoints: Array<Record<string, unknown>>): number {
+    if (dataPoints.length === 0) return Date.now()
+    const lastPoint = dataPoints[dataPoints.length - 1]
+    return typeof lastPoint.timestamp === 'number' ? lastPoint.timestamp : Date.now()
   }
 
   private getDayInMillis(): number {
@@ -172,4 +174,10 @@ class MLModelsEngine {
 
 // Export a singleton instance of the engine
 const mlModelsEngine = new MLModelsEngine()
+
+// Backward-compatible named accessor used by API routes
+export function getMLEngine() {
+  return mlModelsEngine
+}
+
 export default mlModelsEngine
