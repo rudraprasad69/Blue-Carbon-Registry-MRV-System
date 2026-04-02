@@ -72,7 +72,7 @@ export function PricingOracle() {
         </div>
 
         <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-          <div className="flex gap-2 text-sm text-blue-700 dark:text-blue-400">
+          <div className="flex gap-2 text-sm text-blue-700">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>Oracle data verified by Chainlink. Last update: {lastUpdate.toLocaleTimeString()}</span>
           </div>

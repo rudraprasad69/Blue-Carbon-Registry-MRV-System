@@ -9,13 +9,13 @@ export function FieldDataCollection() {
   const getHealthStatusColor = (status: string) => {
     switch (status) {
       case "Healthy":
-        return "bg-green-100/20 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+        return "bg-green-100/20 text-green-700"
       case "Excellent":
-        return "bg-blue-100/20 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+        return "bg-blue-100/20 text-blue-700"
       case "Monitoring":
-        return "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+        return "bg-yellow-100/20 text-yellow-700"
       default:
-        return "bg-gray-100/20 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400"
+        return "bg-gray-100/20 text-gray-700"
     }
   }
 

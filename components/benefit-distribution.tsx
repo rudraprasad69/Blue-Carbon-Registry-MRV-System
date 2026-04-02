@@ -55,7 +55,7 @@ export function BenefitDistribution() {
                 </div>
 
                 {/* Per Person Amount */}
-                <div className="bg-green-100/10 dark:bg-green-900/10 rounded-lg p-3">
+                <div className="bg-green-100/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="w-4 h-4 text-green-600" />
                     <p className="text-xs text-muted-foreground">Per Beneficiary</p>
@@ -64,7 +64,7 @@ export function BenefitDistribution() {
                 </div>
 
                 {/* Distribution Date */}
-                <div className="bg-blue-100/10 dark:bg-blue-900/10 rounded-lg p-3">
+                <div className="bg-blue-100/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Calendar className="w-4 h-4 text-blue-600" />
                     <p className="text-xs text-muted-foreground">Date</p>

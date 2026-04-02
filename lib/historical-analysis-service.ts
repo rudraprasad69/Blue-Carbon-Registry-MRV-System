@@ -1,14 +1,11 @@
+
 /**
  * Historical Analysis Service
- * Manages time-series data, archival, and trend predictions
- * 
- * Features:
- * - Historical data storage and retrieval
- * - Time-series analysis
- * - Trend prediction using simple linear regression
- * - Data archival and export
- * - Seasonal decomposition
+ * Manages time-series data, archival, and trend predictions.
+ * Integrates with ML services for advanced analytics.
  */
+import mlModelsEngine from './ml-models-engine'
+import anomalyDetectionService, { type Anomaly } from './ml-anomaly-detection'
 
 export interface HistoricalDataPoint {
   timestamp: Date
@@ -32,13 +29,25 @@ export interface TrendPrediction {
   projectId: string
   metric: string
   currentTrend: 'increasing' | 'decreasing' | 'stable'
-  projectedValue30Days: number
-  projectedValue90Days: number
-  projectedValue1Year: number
-  confidence: number
   slope: number
-  rSquared: number
+  confidence: number // Overall confidence in the model/trend
+  rSquared: number // For linear components
+  modelType: 'PROPHET' | 'ARIMA' | 'LSTM' // Model used
+  // Forecasted values at different horizons
+  forecast: {
+    days: number
+    value: number
+    confidenceInterval?: [number, number]
+  }[]
+  /** @deprecated */
+  projectedValue30Days: number
+  /** @deprecated */
+  projectedValue90Days: number
+  /** @deprecated */
+  projectedValue1Year: number
 }
+
+export { type Anomaly }
 
 export interface SeasonalAnalysis {
   metric: string
@@ -94,14 +103,15 @@ class HistoricalAnalysisService {
 
       // Simulate increasing trend with seasonal variation
       const trend = i * 0.5 // 0.5 units per day trend
-      const seasonal = Math.sin((i / 365) * Math.PI * 2) * 500 // Seasonal variation
+      const yearlySeasonal = Math.sin((i / 365) * Math.PI * 2) * 500 // Yearly variation
+      const weeklySeasonal = Math.cos((i / 7) * Math.PI * 2) * 150 // Weekly variation
       const noise = (Math.random() - 0.5) * 200 // Random noise
 
       sampleData.push({
         timestamp: date,
         projectId: 'project-001',
         metric: 'creditsGenerated',
-        value: Math.max(0, 5000 + trend + seasonal + noise),
+        value: Math.max(0, 5000 + trend + yearlySeasonal + weeklySeasonal + noise),
         unit: 'credits',
         verificationStatus: 'VERIFIED',
       })
@@ -168,68 +178,95 @@ class HistoricalAnalysisService {
   }
 
   /**
-   * Predict future values using linear regression
+   * Predict future values using the ML Models Engine.
    */
-  predictTrend(projectId: string, metric: string, forecastDays: number = 90): TrendPrediction {
+  async predictTrend(
+    projectId: string,
+    metric: string,
+    modelType: 'PROPHET' | 'ARIMA' | 'LSTM' = 'PROPHET'
+  ): Promise<TrendPrediction> {
     const key = `${projectId}-${metric}`
     const data = this.timeSeriesData.get(key) || []
 
-    if (data.length < 2) {
-      return {
-        projectId,
-        metric,
-        currentTrend: 'stable',
-        projectedValue30Days: 0,
-        projectedValue90Days: 0,
-        projectedValue1Year: 0,
-        confidence: 0,
-        slope: 0,
-        rSquared: 0,
-      }
+    if (data.length < 10) {
+      throw new Error('Not enough data points to make a prediction.')
     }
 
-    // Extract values and dates
-    const values = data.map((dp) => dp.value)
-    const xs = data.map((dp, i) => i) // Use index as x value
+    // Prepare input for the ML model
+    const mlInput = {
+      dataPoints: data.map((dp) => ({ value: dp.value, timestamp: dp.timestamp.getTime() })),
+      forecastHorizon: 365, // Predict for a full year
+      modelType,
+    }
 
-    // Calculate linear regression
-    const n = xs.length
-    const sumX = xs.reduce((a, b) => a + b, 0)
-    const sumY = values.reduce((a, b) => a + b, 0)
-    const sumXY = xs.reduce((total, x, i) => total + x * values[i], 0)
-    const sumX2 = xs.reduce((total, x) => total + x * x, 0)
+    const predictionOutput = await mlModelsEngine.predict(mlInput)
 
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-    const intercept = (sumY - slope * sumX) / n
-
-    // Calculate R-squared
-    const yMean = sumY / n
-    const ssTotal = values.reduce((sum, y) => sum + Math.pow(y - yMean, 2), 0)
-    const ssPredicted = values.reduce((sum, y, i) => {
-      const predicted = intercept + slope * i
-      return sum + Math.pow(y - predicted, 2)
-    }, 0)
-    const rSquared = 1 - ssPredicted / ssTotal
-
-    // Make predictions
-    const projectedValue30Days = intercept + slope * (n + 30)
-    const projectedValue90Days = intercept + slope * (n + 90)
-    const projectedValue1Year = intercept + slope * (n + 365)
-
-    // Determine trend
+    // Analyze the trend from the forecast
+    const firstForecast = predictionOutput.forecast[0].value
+    const lastForecast = predictionOutput.forecast[predictionOutput.forecast.length - 1].value
+    const slope = (lastForecast - firstForecast) / predictionOutput.forecast.length
     const currentTrend = slope > 0.1 ? 'increasing' : slope < -0.1 ? 'decreasing' : 'stable'
+
+    // Extract specific forecast points
+    const forecast30 = predictionOutput.forecast[29]
+    const forecast90 = predictionOutput.forecast[89]
+    const forecast365 = predictionOutput.forecast[364]
 
     return {
       projectId,
       metric,
       currentTrend,
-      projectedValue30Days: Math.max(0, projectedValue30Days),
-      projectedValue90Days: Math.max(0, projectedValue90Days),
-      projectedValue1Year: Math.max(0, projectedValue1Year),
-      confidence: Math.min(1, rSquared),
       slope,
-      rSquared,
+      // Confidence could be a mix of model fit and forecast variance
+      confidence: (predictionOutput.modelFit.aic + predictionOutput.modelFit.bic) / 2000,
+      rSquared: 0, // R-squared is less relevant for complex models, but kept for compatibility
+      modelType: predictionOutput.modelType,
+      forecast: [
+        {
+          days: 30,
+          value: forecast30.value,
+          confidenceInterval: forecast30.confidenceInterval,
+        },
+        {
+          days: 90,
+          value: forecast90.value,
+          confidenceInterval: forecast90.confidenceInterval,
+        },
+        {
+          days: 365,
+          value: forecast365.value,
+          confidenceInterval: forecast365.confidenceInterval,
+        },
+      ],
+      // Deprecated fields for backward compatibility
+      projectedValue30Days: forecast30.value,
+      projectedValue90Days: forecast90.value,
+      projectedValue1Year: forecast365.value,
     }
+  }
+
+  /**
+   * Detect anomalies in the time-series data.
+   */
+  async detectAnomalies(
+    projectId: string,
+    metric: string,
+    sensitivity: 'low' | 'medium' | 'high' = 'medium'
+  ): Promise<Anomaly[]> {
+    const key = `${projectId}-${metric}`
+    const data = this.timeSeriesData.get(key) || []
+
+    if (data.length < 10) {
+      return []
+    }
+
+    const detectionInput = {
+      dataPoints: data.map((dp) => ({ value: dp.value, timestamp: dp.timestamp.getTime() })),
+      sensitivity,
+    }
+
+    const result = await anomalyDetectionService.detect(detectionInput)
+    return result.anomalies
   }
 
   /**
@@ -253,7 +290,7 @@ class HistoricalAnalysisService {
     })
 
     // Calculate monthly averages
-    const monthlyAverages = Object.entries(monthlyData).map(([month, values]) => {
+    const monthlyAverages = Object.entries(monthlyData).map(([_, values]) => {
       return values.reduce((a, b) => a + b, 0) / values.length
     })
 
@@ -330,6 +367,7 @@ class HistoricalAnalysisService {
     for (const [key, dataPoints] of this.timeSeriesData.entries()) {
       if (key.startsWith(projectId)) {
         const filtered = dataPoints.filter((dp) => new Date(dp.timestamp) > cutoffDate)
+.
         deletedPoints += dataPoints.length - filtered.length
         this.timeSeriesData.set(key, filtered)
       }

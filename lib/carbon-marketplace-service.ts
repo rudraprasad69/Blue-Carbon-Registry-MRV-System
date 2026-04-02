@@ -531,6 +531,15 @@ class CarbonMarketplaceService {
   }
 
   /**
+   * Get orders for a user
+   */
+  public getUserOrders(userAddress: string): MarketOrder[] {
+    return Array.from(this.orders.values()).filter(
+      o => o.creator === userAddress
+    )
+  }
+
+  /**
    * Get trades for a user
    */
   public getUserTrades(userAddress: string): TradeExecution[] {

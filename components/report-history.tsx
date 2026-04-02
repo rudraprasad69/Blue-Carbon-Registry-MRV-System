@@ -84,7 +84,7 @@ export function ReportHistory() {
                   {report.status === "completed" && (
                     <>
                       <span className="text-xs text-muted-foreground">•</span>
-                      <Badge className="bg-green-100/20 text-green-700 dark:bg-green-900/20 dark:text-green-400 text-xs">
+                      <Badge className="bg-green-100/20 text-green-700 text-xs">
                         Ready
                       </Badge>
                     </>

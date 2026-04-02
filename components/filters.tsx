@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { HydrationWrapper } from "@/components/hydration-wrapper"
 import { Slider } from "@/components/ui/slider"
 
 interface FiltersProps {
@@ -42,16 +43,18 @@ export function Filters({ onChange, onSortChange }: FiltersProps) {
           <CardTitle className="text-base">Sort By</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select defaultValue="price-low" onValueChange={(v: any) => onSortChange(v)}>
-            <SelectTrigger className="border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
-            </SelectContent>
-          </Select>
+          <HydrationWrapper fallback={<div className="h-10 bg-muted rounded" />}>
+            <Select defaultValue="price-low" onValueChange={(v: any) => onSortChange(v)}>
+              <SelectTrigger className="border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </HydrationWrapper>
         </CardContent>
       </Card>
 

@@ -1,11 +1,13 @@
+
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   getHistoricalService,
   type TimeSeriesData,
   type TrendPrediction,
   type SeasonalAnalysis,
+  type Anomaly,
 } from '@/lib/historical-analysis-service'
 
 interface HistoricalTrendsViewerProps {
@@ -26,31 +28,57 @@ export function HistoricalTrendsViewer({
   const [timeSeries, setTimeSeries] = useState<TimeSeriesData | null>(null)
   const [prediction, setPrediction] = useState<TrendPrediction | null>(null)
   const [seasonal, setSeasonal] = useState<SeasonalAnalysis | null>(null)
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([])
   const [loading, setLoading] = useState(true)
+  const [isLoadingAnomalies, setIsLoadingAnomalies] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<'30' | '90' | '365'>('90')
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const service = getHistoricalService()
+      const periodDays = parseInt(selectedPeriod)
+
+      const ts = service.getTimeSeriesLastDays(projectId, metric, periodDays)
+      setTimeSeries(ts)
+
+      if (showPredictions) {
+        try {
+          const pred = await service.predictTrend(projectId, metric)
+          setPrediction(pred)
+        } catch (err: any) {
+          console.warn('Prediction unavailable:', err.message)
+          setPrediction(null)
+        }
+      }
+
+      if (showSeasonality) {
+        const seas = service.analyzeSeasonalPattern(projectId, metric)
+        setSeasonal(seas)
+      }
+    } catch (error) {
+      console.error('Failed to load historical data:', error)
+      // Here you could set an error state to show in the UI
+    } finally {
+      setLoading(false)
+    }
+  }, [projectId, metric, selectedPeriod, showPredictions, showSeasonality])
 
   useEffect(() => {
     loadData()
-  }, [projectId, metric, selectedPeriod])
+  }, [loadData])
 
-  function loadData() {
+  const handleDetectAnomalies = async () => {
+    setIsLoadingAnomalies(true)
     const service = getHistoricalService()
-    const periodDays = parseInt(selectedPeriod)
-
-    const ts = service.getTimeSeriesLastDays(projectId, metric, periodDays)
-    setTimeSeries(ts)
-
-    if (showPredictions) {
-      const pred = service.predictTrend(projectId, metric, 90)
-      setPrediction(pred)
+    try {
+      const detectedAnomalies = await service.detectAnomalies(projectId, metric, 'medium')
+      setAnomalies(detectedAnomalies)
+    } catch (error) {
+      console.error('Failed to detect anomalies:', error)
+    } finally {
+      setIsLoadingAnomalies(false)
     }
-
-    if (showSeasonality) {
-      const seas = service.analyzeSeasonalPattern(projectId, metric)
-      setSeasonal(seas)
-    }
-
-    setLoading(false)
   }
 
   if (loading || !timeSeries) {
@@ -64,24 +92,25 @@ export function HistoricalTrendsViewer({
     )
   }
 
-  const stats = timeSeries.dataPoints.length > 0
-    ? {
-        latest: timeSeries.dataPoints[timeSeries.dataPoints.length - 1].value,
-        earliest: timeSeries.dataPoints[0].value,
-        max: Math.max(...timeSeries.dataPoints.map((dp) => dp.value)),
-        min: Math.min(...timeSeries.dataPoints.map((dp) => dp.value)),
-        avg: timeSeries.dataPoints.reduce((sum, dp) => sum + dp.value, 0) / timeSeries.dataPoints.length,
-      }
-    : null
+  const stats =
+    timeSeries.dataPoints.length > 0
+      ? {
+          latest: timeSeries.dataPoints[timeSeries.dataPoints.length - 1].value,
+          earliest: timeSeries.dataPoints[0].value,
+          max: Math.max(...timeSeries.dataPoints.map((dp) => dp.value)),
+          min: Math.min(...timeSeries.dataPoints.map((dp) => dp.value)),
+          avg: timeSeries.dataPoints.reduce((sum, dp) => sum + dp.value, 0) / timeSeries.dataPoints.length,
+        }
+      : null
 
-  const changePercent = stats ? ((stats.latest - stats.earliest) / stats.earliest) * 100 : 0
+  const changePercent = stats && stats.earliest !== 0 ? ((stats.latest - stats.earliest) / stats.earliest) * 100 : 0
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-linear-to-r from-green-900 to-cyan-900 rounded-lg border border-green-700 p-6">
         <h1 className="text-3xl font-bold text-white mb-2">📊 Historical Trends & Predictions</h1>
-        <p className="text-green-200">Time-series analysis with forecasting</p>
+        <p className="text-green-200">Time-series analysis with forecasting and anomaly detection</p>
       </div>
 
       {/* Period Selector */}
@@ -132,7 +161,8 @@ export function HistoricalTrendsViewer({
           <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
             <p className="text-slate-400 text-sm mb-2">Change</p>
             <p className={`text-2xl font-bold ${changePercent > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {changePercent > 0 ? '+' : ''}{changePercent.toFixed(1)}%
+              {changePercent > 0 ? '+' : ''}
+              {changePercent.toFixed(1)}%
             </p>
           </div>
         </div>
@@ -142,7 +172,6 @@ export function HistoricalTrendsViewer({
       <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Value Progression</h3>
 
-        {/* Area chart representation */}
         <div className="flex items-end justify-between gap-0.5 h-40 bg-slate-800 p-4 rounded">
           {timeSeries.dataPoints.map((dp, idx) => {
             const max = Math.max(...timeSeries.dataPoints.map((d) => d.value)) || 1
@@ -178,29 +207,22 @@ export function HistoricalTrendsViewer({
       {/* Predictions */}
       {showPredictions && prediction && (
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">🔮 Trend Predictions</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">🔮 Trend Predictions ({prediction.modelType})</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-slate-400 text-sm mb-2">30-Day Forecast</p>
-              <p className="text-2xl font-bold text-blue-400">{prediction.projectedValue30Days.toFixed(0)}</p>
-              <p className="text-xs text-slate-500 mt-1">Estimated value</p>
-            </div>
-
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-slate-400 text-sm mb-2">90-Day Forecast</p>
-              <p className="text-2xl font-bold text-purple-400">{prediction.projectedValue90Days.toFixed(0)}</p>
-              <p className="text-xs text-slate-500 mt-1">Estimated value</p>
-            </div>
-
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-slate-400 text-sm mb-2">1-Year Forecast</p>
-              <p className="text-2xl font-bold text-cyan-400">{prediction.projectedValue1Year.toFixed(0)}</p>
-              <p className="text-xs text-slate-500 mt-1">Estimated value</p>
-            </div>
+            {prediction.forecast.map((forecast) => (
+              <div key={forecast.days} className="bg-slate-800 rounded p-4">
+                <p className="text-slate-400 text-sm mb-2">{forecast.days}-Day Forecast</p>
+                <p className="text-2xl font-bold text-blue-400">{forecast.value.toFixed(0)}</p>
+                {forecast.confidenceInterval && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Range: {forecast.confidenceInterval[0].toFixed(0)} - {forecast.confidenceInterval[1].toFixed(0)}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
 
-          {/* Prediction details */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
             <div>
               <p className="text-slate-400 text-xs mb-1">Current Trend</p>
@@ -213,7 +235,7 @@ export function HistoricalTrendsViewer({
             </div>
 
             <div>
-              <p className="text-slate-400 text-xs mb-1">Confidence</p>
+              <p className="text-slate-400 text-xs mb-1">Model Confidence</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-slate-700 rounded-full h-2">
                   <div
@@ -224,35 +246,53 @@ export function HistoricalTrendsViewer({
                 <p className="text-white font-semibold text-sm">{(prediction.confidence * 100).toFixed(0)}%</p>
               </div>
             </div>
-
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Slope (Rate of Change)</p>
-              <p className={`text-white font-semibold ${prediction.slope > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {prediction.slope > 0 ? '+' : ''}{prediction.slope.toFixed(2)} units/day
-              </p>
-            </div>
-
-            <div>
-              <p className="text-slate-400 text-xs mb-1">R-squared (Fit Quality)</p>
-              <p className="text-white font-semibold">{(prediction.rSquared * 100).toFixed(1)}%</p>
-            </div>
           </div>
         </div>
       )}
+
+      {/* Anomaly Detection */}
+      <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">🚨 Anomaly Detection</h3>
+        <button
+          onClick={handleDetectAnomalies}
+          disabled={isLoadingAnomalies}
+          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium text-sm disabled:bg-slate-700 disabled:cursor-not-allowed"
+        >
+          {isLoadingAnomalies ? 'Scanning...' : 'Scan for Anomalies'}
+        </button>
+
+        {isLoadingAnomalies && <p className="text-slate-400 mt-4">Analyzing data for outliers...</p>}
+
+        {anomalies.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h4 className="font-semibold text-red-400">Detected {anomalies.length} Anomalies:</h4>
+            <ul className="list-disc list-inside bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-sm text-slate-300 space-y-2">
+              {anomalies.map((anomaly) => (
+                <li key={anomaly.timestamp}>
+                  <strong>{new Date(anomaly.timestamp).toLocaleDateString()}:</strong> Value of{' '}
+                  <span className="font-bold text-white">{anomaly.value.toFixed(2)}</span> was flagged. (
+                  <span className="text-red-400">Severity: {(anomaly.severity * 100).toFixed(0)}%</span>)
+                  <p className="text-xs text-slate-400 pl-4">{anomaly.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!isLoadingAnomalies && anomalies.length === 0 && (
+          <p className="text-slate-400 mt-4">Click the button to scan the time series for anomalies.</p>
+        )}
+      </div>
 
       {/* Seasonality */}
       {showSeasonality && seasonal && (
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-white mb-4">🌊 Seasonal Pattern</h3>
-
-          {/* Monthly breakdown */}
           <div className="flex items-end justify-between gap-1 h-32 mb-6">
             {seasonal.seasonalPattern.map((value, month) => {
               const maxVal = Math.max(...seasonal.seasonalPattern)
               const height = (value / maxVal) * 100
-
               const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
               return (
                 <div key={month} className="flex-1 flex flex-col items-center">
                   <div
@@ -265,39 +305,12 @@ export function HistoricalTrendsViewer({
               )
             })}
           </div>
-
-          {/* Seasonality info */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-slate-800 rounded">
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Peak Month</p>
-              <p className="text-white font-semibold">
-                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
-                  seasonal.peakMonth
-                ]}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Lowest Month</p>
-              <p className="text-white font-semibold">
-                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
-                  seasonal.lowestMonth
-                ]}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-slate-400 text-xs mb-1">Seasonal Strength</p>
-              <p className="text-white font-semibold">{(seasonal.seasonalStrength * 100).toFixed(1)}%</p>
-            </div>
-          </div>
         </div>
       )}
 
       {/* Export Options */}
       <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">📥 Export Data</h3>
-
         <div className="flex gap-3">
           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm">
             Export as CSV

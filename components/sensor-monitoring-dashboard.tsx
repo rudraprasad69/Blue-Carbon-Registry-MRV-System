@@ -363,6 +363,9 @@ export function SensorMonitoringDashboard({
         </p>
         <p>
           Offline sensors: {reading.summary.offlineSensorCount} • Active alerts: {reading.summary.alertCount}
+line: {summary.offlineSensorCount}</span>
+          <span className="hidden sm:inline">•</span>
+          <span>Alerts: {summary.alertCount}</span>
         </p>
       </div>
     </div>

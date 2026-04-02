@@ -13,8 +13,8 @@ export function MarketIntelligence() {
   }
 
   const getImpactColor = (impact: string) => {
-    if (impact === "high") return "bg-red-100/20 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-    return "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+    if (impact === "high") return "bg-red-100/20 text-red-700"
+    return "bg-yellow-100/20 text-yellow-700"
   }
 
   return (

@@ -88,8 +88,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         }
       }
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+      ws.onerror = () => {
+        // Silently catch WS connection errors to prevent console spam
+        // since we are currently running without a live local WebSocket server.
       }
 
       ws.onclose = () => {

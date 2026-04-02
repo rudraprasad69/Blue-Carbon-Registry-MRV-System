@@ -18,9 +18,9 @@ export function TransactionHistory() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
-        return "bg-green-500/20 text-green-700 dark:text-green-400"
+        return "bg-green-500/20 text-green-700"
       case "pending":
-        return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+        return "bg-yellow-500/20 text-yellow-700"
       default:
         return "bg-muted"
     }

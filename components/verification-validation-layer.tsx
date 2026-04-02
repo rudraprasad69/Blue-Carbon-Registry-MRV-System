@@ -90,13 +90,13 @@ function getStatusIcon(status: string) {
 function getStatusColor(status: string) {
   switch (status) {
     case "verified":
-      return "bg-green-500/20 text-green-700 dark:text-green-400"
+      return "bg-green-500/20 text-green-700"
     case "validating":
-      return "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+      return "bg-blue-500/20 text-blue-700"
     case "pending":
-      return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+      return "bg-yellow-500/20 text-yellow-700"
     case "failed":
-      return "bg-red-500/20 text-red-700 dark:text-red-400"
+      return "bg-red-500/20 text-red-700"
     default:
       return "bg-gray-500/20 text-gray-700"
   }
@@ -288,7 +288,7 @@ export function VerificationValidationLayer() {
                   </div>
 
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                    <p className="text-xs text-blue-700 dark:text-blue-400">
+                    <p className="text-xs text-blue-700">
                       This validation record has been recorded on the blockchain and is cryptographically secured.
                     </p>
                   </div>

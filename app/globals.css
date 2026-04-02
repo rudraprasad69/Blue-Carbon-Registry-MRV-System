@@ -1,76 +1,257 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+@theme {
+  /* Regal & Deep Theme */
+  --color-background: hsl(40 33% 98%); /* Cream / Off-White */
+  --color-foreground: hsl(0 0% 20%); /* Charcoal Gray text */
+  
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(0 0% 20%);
+  
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(0 0% 20%);
+  
+  /* Primary brand color - Deep Navy */
+  --color-primary: hsl(216 65% 11%);
+  --color-primary-foreground: hsl(40 33% 98%);
+  
+  /* Secondary actions and complementary colors - Burnt Gold */
+  --color-secondary: hsl(44 67% 46%);
+  --color-secondary-foreground: hsl(216 65% 11%);
+  
+  /* Subtle muted elements */
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  
+  /* Status Colors */
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  
+  --color-success: hsl(142.1 76.2% 36.3%);
+  --color-success-foreground: hsl(355.7 100% 97.3%);
+  
+  /* Layout basics */
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(44 67% 46%); /* Burnt Gold ring */
+  
+  /* Border Radius Constants */
+  --radius: 0.75rem; 
 }
 
 @layer base {
+  html,
+  :root {
+    color-scheme: light;
+    background-color: hsl(0 0% 100%);
+    color: hsl(222.2 84% 4.9%);
+  }
+
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================================
+   REGAL UI ENHANCEMENT LAYER — Vibrant Animations & Interactions
+   All additions are purely additive. No existing styles overridden.
+   ============================================================ */
+
+/* ── Keyframe Definitions ─────────────────────────────────── */
+@keyframes bcr-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(197, 155, 39, 0); }
+  50%       { box-shadow: 0 0 24px 8px rgba(197, 155, 39, 0.35); }
+}
+
+@keyframes bcr-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes bcr-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes bcr-fade-in-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bcr-border-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(197, 155, 39, 0.2); }
+  50%       { box-shadow: 0 0 0 2px rgba(197, 155, 39, 0.65); }
+}
+
+@keyframes bcr-scale-in {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* ── Utility class used in chat + search dropdowns ────────── */
+.animate-fade-in {
+  animation: bcr-fade-in-up 0.22s ease both;
+}
+
+/* ── Page content sections: staggered fade-in entrance ───── */
+[class*="space-y"] > *:nth-child(1) { animation: bcr-fade-in-up 0.3s 0.00s ease both; }
+[class*="space-y"] > *:nth-child(2) { animation: bcr-fade-in-up 0.3s 0.06s ease both; }
+[class*="space-y"] > *:nth-child(3) { animation: bcr-fade-in-up 0.3s 0.12s ease both; }
+[class*="space-y"] > *:nth-child(4) { animation: bcr-fade-in-up 0.3s 0.18s ease both; }
+[class*="space-y"] > *:nth-child(5) { animation: bcr-fade-in-up 0.3s 0.24s ease both; }
+
+/* ── Logo title: animated Burnt Gold shimmer gradient ─────── */
+aside h1 {
+  background: linear-gradient(90deg,
+    hsl(216 65% 11%),
+    hsl(44 67% 46%),
+    hsl(216 65% 22%),
+    hsl(44 67% 46%),
+    hsl(216 65% 11%)
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: bcr-shimmer 4s linear infinite;
+}
+
+/* ── Sidebar nav buttons: animated left accent bar ────────── */
+aside nav button {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.22s ease,
+              box-shadow 0.22s ease !important;
+}
+
+aside nav button::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 15%; bottom: 15%;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: hsl(44 67% 46%);
+  transform: scaleY(0);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+
+aside nav button:hover::before { transform: scaleY(1); }
+aside nav button:hover {
+  transform: translateX(4px);
+  box-shadow: 2px 0 12px rgba(197, 155, 39, 0.15);
+}
+
+/* ── Account type selector cards ─────────────────────────── */
+aside [class*="rounded-xl"] {
+  transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.26s ease !important;
+}
+
+aside [class*="rounded-xl"]:hover {
+  transform: scale(1.025) translateX(3px);
+  box-shadow: 0 6px 24px rgba(197, 155, 39, 0.18),
+              inset 0 0 0 1px rgba(197, 155, 39, 0.28);
+}
+
+/* ── All bordered cards: zoom + Burnt Gold glow ───────────── */
+[class*="rounded-lg"][class*="border"],
+[class*="rounded-xl"][class*="border"],
+[class*="rounded-2xl"][class*="border"] {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.28s ease !important;
+}
+
+[class*="rounded-lg"][class*="border"]:hover,
+[class*="rounded-xl"][class*="border"]:hover,
+[class*="rounded-2xl"][class*="border"]:hover {
+  transform: scale(1.022) translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.09),
+              0 0 0 1.5px rgba(197, 155, 39, 0.3);
+}
+
+/* ── Buttons: lift + Burnt Gold glow ──────────────────────── */
+button:not([disabled]) {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease !important;
+}
+
+button:not([disabled]):hover {
+  transform: scale(1.04) translateY(-1px);
+  box-shadow: 0 6px 18px rgba(197, 155, 39, 0.22);
+}
+
+button:not([disabled]):active {
+  transform: scale(0.97) !important;
+}
+
+/* ── Primary/CTA buttons: Burnt Gold pulse on hover ──────── */
+button[class*="bg-primary"]:hover {
+  animation: bcr-pulse-glow 1.5s ease infinite;
+}
+
+/* ── Form inputs: focus glow ─────────────────────────────── */
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.2),
+              0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ── Table rows: subtle row highlight on hover ────────────── */
+tr {
+  transition: background-color 0.16s ease;
+}
+
+tr:hover {
+  background-color: rgba(197, 155, 39, 0.04) !important;
+}
+
+/* ── Dropdown/popover: scale-in entrance ─────────────────── */
+[class*="absolute"][class*="rounded-2xl"],
+[class*="absolute"][class*="rounded-xl"],
+[role="menu"],
+[role="listbox"] {
+  animation: bcr-scale-in 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: top center;
+}
+
+/* ── Progress / stat bars: animated shimmer fill ─────────── */
+[class*="h-2"][class*="rounded-full"] > *,
+[class*="h-1.5"][class*="rounded-full"] > * {
+  background: linear-gradient(90deg,
+    hsl(44 67% 38%),
+    hsl(44 67% 58%),
+    hsl(44 67% 38%)
+  );
+  background-size: 200% auto;
+  animation: bcr-shimmer 2.2s linear infinite;
+}
+
+/* ── Scrollbar: Burnt Gold accent ────────────────────────── */
+::-webkit-scrollbar           { width: 6px; height: 6px; }
+::-webkit-scrollbar-track     { background: transparent; }
+::-webkit-scrollbar-thumb     { background: rgba(197,155,39,0.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(197,155,39,0.6); }
+
+/* ── Badges & pill tags: subtle float on hover ───────────── */
+[class*="rounded-full"][class*="text-xs"],
+[class*="rounded-full"][class*="text-sm"][class*="font"] {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+[class*="rounded-full"][class*="text-xs"]:hover,
+[class*="rounded-full"][class*="text-sm"][class*="font"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Loader/spinner icons: faster spin ───────────────────── */
+.animate-spin { animation-duration: 0.7s !important; }
+

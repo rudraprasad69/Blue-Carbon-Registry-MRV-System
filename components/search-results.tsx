@@ -21,9 +21,9 @@ interface Credit {
 
 export function SearchResults({ results }: { results: Credit[] }) {
   const getStatusColor = (status: string) => {
-    if (status === "verified") return "bg-green-100/20 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-    if (status === "pending") return "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-    return "bg-blue-100/20 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+    if (status === "verified") return "bg-green-100/20 text-green-700"
+    if (status === "pending") return "bg-yellow-100/20 text-yellow-700"
+    return "bg-blue-100/20 text-blue-700"
   }
 
   return (

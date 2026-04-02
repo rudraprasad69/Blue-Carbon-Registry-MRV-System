@@ -46,7 +46,7 @@ export function CommunityProjects() {
                 <span className="text-sm text-muted-foreground capitalize">{project.ecosystem}</span>
               </div>
               <div className="pt-3 border-t border-border">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100/20 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100/20 text-green-700">
                   {project.status}
                 </span>
               </div>

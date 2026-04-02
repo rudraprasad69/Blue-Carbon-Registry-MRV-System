@@ -19,6 +19,7 @@ import {
   analyzeSatelliteImagery,
   type SatelliteAnalysisResult,
 } from '@/lib/earth-engine-service'
+import NdviTimeSeriesChart from './ndvi-time-series-chart'
 
 interface SatelliteAnalysisViewerProps {
   areaName: string
@@ -355,43 +356,46 @@ export function SatelliteAnalysisViewer({
 
       {/* Content */}
       {activeTab === 'vegetation' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <VegetationIndexCard
-            label="NDVI"
-            value={analysis.vegetationIndices.ndvi}
-            range={[-1, 1]}
-            description="Normalized Difference Vegetation Index"
-          />
-          <VegetationIndexCard
-            label="EVI"
-            value={analysis.vegetationIndices.evi}
-            range={[-1, 1]}
-            description="Enhanced Vegetation Index"
-          />
-          <VegetationIndexCard
-            label="LAI"
-            value={analysis.vegetationIndices.lai}
-            range={[0, 8]}
-            description="Leaf Area Index"
-          />
-          <VegetationIndexCard
-            label="GCI"
-            value={analysis.vegetationIndices.gci}
-            range={[0, 1]}
-            description="Green Chlorophyll Index"
-          />
-          <VegetationIndexCard
-            label="NDBI"
-            value={analysis.vegetationIndices.ndbi}
-            range={[-1, 1]}
-            description="Built-up Index"
-          />
-          <VegetationIndexCard
-            label="NDMI"
-            value={analysis.vegetationIndices.ndmi}
-            range={[-1, 1]}
-            description="Moisture Index"
-          />
+        <div className="space-y-4">
+          <NdviTimeSeriesChart data={analysis.ndviTimeSeries} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <VegetationIndexCard
+              label="NDVI"
+              value={analysis.vegetationIndices.ndvi}
+              range={[-1, 1]}
+              description="Normalized Difference Vegetation Index"
+            />
+            <VegetationIndexCard
+              label="EVI"
+              value={analysis.vegetationIndices.evi}
+              range={[-1, 1]}
+              description="Enhanced Vegetation Index"
+            />
+            <VegetationIndexCard
+              label="LAI"
+              value={analysis.vegetationIndices.lai}
+              range={[0, 8]}
+              description="Leaf Area Index"
+            />
+            <VegetationIndexCard
+              label="GCI"
+              value={analysis.vegetationIndices.gci}
+              range={[0, 1]}
+              description="Green Chlorophyll Index"
+            />
+            <VegetationIndexCard
+              label="NDBI"
+              value={analysis.vegetationIndices.ndbi}
+              range={[-1, 1]}
+              description="Built-up Index"
+            />
+            <VegetationIndexCard
+              label="NDMI"
+              value={analysis.vegetationIndices.ndmi}
+              range={[-1, 1]}
+              description="Moisture Index"
+            />
+          </div>
         </div>
       )}
 

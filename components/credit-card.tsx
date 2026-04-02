@@ -30,9 +30,9 @@ export function CreditCard({ credit }: CreditCardProps) {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
 
   const verificationColors = {
-    verified: "bg-green-500/20 text-green-700 dark:text-green-400",
-    pending: "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400",
-    auditing: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
+    verified: "bg-green-500/20 text-green-700",
+    pending: "bg-yellow-500/20 text-yellow-700",
+    auditing: "bg-blue-500/20 text-blue-700",
   }
 
   return (

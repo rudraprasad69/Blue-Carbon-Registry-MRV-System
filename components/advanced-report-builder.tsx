@@ -37,7 +37,9 @@ export function AdvancedReportBuilder({
     projectName,
     verificationStatus,
     estimatedCredits,
-    carbonSequestered: analysisData.biomassEstimate.carbonContent * 100 // Mock calculation
+    carbonSequestered: analysisData?.biomassEstimate?.carbonContent 
+      ? analysisData.biomassEstimate.carbonContent * 100 
+      : 0
   }
 
   async function generateReport() {

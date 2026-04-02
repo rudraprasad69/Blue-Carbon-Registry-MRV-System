@@ -1,6 +1,6 @@
 "use client"
 
-import { TrendingUp, BarChart3, Users, Settings } from "lucide-react"
+import { TrendingUp, BarChart3, Users } from "lucide-react"
 import { AccountTypeSelector } from "./account-type-selector"
 
 interface SidebarProps {
@@ -68,9 +68,9 @@ export function Sidebar({ activeTab, setActiveTab, userRole, setUserRole }: Side
   const menuItems = getMenuItems()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-border bg-card dark:bg-slate-950 flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-white/40 bg-white/40 backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col z-20">
       {/* Header with Logo */}
-      <div className="p-6 border-b border-border">
+      <div className="p-6 border-b border-white/20">
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             <img src="/logo.jpg" alt="BlueCarbon Logo" className="h-12 w-12 object-contain" />
@@ -83,7 +83,7 @@ export function Sidebar({ activeTab, setActiveTab, userRole, setUserRole }: Side
         </div>
       </div>
 
-      <div className="px-4 py-4 border-b border-border">
+      <div className="px-4 py-4 border-b border-white/20">
         <AccountTypeSelector userRole={userRole} setUserRole={setUserRole} />
       </div>
 
@@ -95,8 +95,8 @@ export function Sidebar({ activeTab, setActiveTab, userRole, setUserRole }: Side
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className={`w-full text-left p-4 rounded-lg transition-all ${
-                isActive ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground hover:bg-muted"
+              className={`w-full text-left p-4 rounded-lg transition-all duration-300 active:scale-[0.98] ${
+                isActive ? "bg-primary text-primary-foreground shadow-md" : "text-foreground hover:bg-muted hover:shadow-sm"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -113,13 +113,6 @@ export function Sidebar({ activeTab, setActiveTab, userRole, setUserRole }: Side
         })}
       </nav>
 
-      {/* Settings - at the bottom */}
-      <div className="border-t border-border p-4">
-        <button className="w-full flex items-center gap-3 p-3 rounded-lg text-foreground hover:bg-muted transition-colors">
-          <Settings className="w-5 h-5" />
-          <span className="text-sm font-medium">Settings</span>
-        </button>
-      </div>
     </aside>
   )
 }

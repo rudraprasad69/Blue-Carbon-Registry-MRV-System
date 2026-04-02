@@ -20,8 +20,8 @@ export function PortfolioAnalytics() {
                 <Badge
                   className={
                     portfolio.riskProfile === "low"
-                      ? "bg-green-100/20 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                      : "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                      ? "bg-green-100/20 text-green-700"
+                      : "bg-yellow-100/20 text-yellow-700"
                   }
                 >
                   {portfolio.riskProfile.toUpperCase()} RISK

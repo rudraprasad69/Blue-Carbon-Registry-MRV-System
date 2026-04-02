@@ -46,7 +46,13 @@ export function Dashboard() {
   })
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background via-slate-50 to-background dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
+      {/* Regal & Deep Animated Background Meshes */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-slate-800/5 blur-[120px] animate-pulse-glow" />
+        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[50%] rounded-full bg-amber-600/5 blur-[120px] animate-float" />
+        <div className="absolute bottom-[-20%] left-[10%] w-[60%] h-[60%] rounded-full bg-slate-700/5 blur-[150px] animate-pulse-glow" style={{ animationDelay: "1s" }} />
+      </div>
       {/* Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userRole={userRole} setUserRole={setUserRole} />
 
@@ -66,7 +72,7 @@ export function Dashboard() {
         </div>
 
         {/* Content Area */}
-        <main className="p-8">
+        <main className="p-8 animate-fade-in">
           {!walletConnected && userRole === "buyer" && (
             <div className="mb-8">
               <WalletConnection

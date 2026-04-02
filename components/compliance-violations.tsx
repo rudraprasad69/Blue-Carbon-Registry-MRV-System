@@ -7,9 +7,9 @@ import { AlertTriangle, CheckCircle, Clock } from "lucide-react"
 
 export function ComplianceViolations() {
   const getSeverityColor = (severity: string) => {
-    if (severity === "high") return "bg-red-100/20 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-    if (severity === "medium") return "bg-yellow-100/20 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-    return "bg-blue-100/20 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+    if (severity === "high") return "bg-red-100/20 text-red-700"
+    if (severity === "medium") return "bg-yellow-100/20 text-yellow-700"
+    return "bg-blue-100/20 text-blue-700"
   }
 
   const getStatusIcon = (status: string) => {

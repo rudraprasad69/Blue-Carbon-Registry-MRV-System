@@ -62,11 +62,11 @@ function getIcon(type: string) {
 function getStatusColor(status: string) {
   switch (status) {
     case "completed":
-      return "bg-green-500/20 text-green-700 dark:text-green-400"
+      return "bg-green-500/20 text-green-700"
     case "processing":
-      return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+      return "bg-yellow-500/20 text-yellow-700"
     case "active":
-      return "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+      return "bg-blue-500/20 text-blue-700"
     default:
       return "bg-gray-500/20 text-gray-700"
   }

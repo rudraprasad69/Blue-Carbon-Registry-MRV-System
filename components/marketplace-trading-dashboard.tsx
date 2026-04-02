@@ -30,35 +30,14 @@ import {
   AlertCircle
 } from 'lucide-react'
 
-interface Order {
-  orderId: string
-  type: 'buy' | 'sell'
-  creditType: string
-  quantity: number
-  pricePerCredit: number
-  status: 'open' | 'partially-filled' | 'filled'
-  creator: string
-  timestamp: string
-}
+import {
+  getCarbonMarketplaceService,
+  type MarketOrder as Order,
+  type TradeExecution as Trade,
+  type MarketPrice,
+} from '@/lib/carbon-marketplace-service'
 
-interface Trade {
-  tradeId: string
-  quantity: number
-  price: number
-  buyer: string
-  seller: string
-  timestamp: string
-}
-
-interface MarketPrice {
-  creditType: string
-  bid: number
-  ask: number
-  last: number
-  trend: 'up' | 'down' | 'neutral'
-}
-
-// Sample price data for charts
+// Sample price data for charts - can be replaced with historical data from service
 const PRICE_HISTORY = [
   { time: '09:00', renewable: 10.2, forestry: 12.5, agriculture: 9.8, efficiency: 8.5 },
   { time: '10:00', renewable: 10.3, forestry: 12.4, agriculture: 9.9, efficiency: 8.6 },
@@ -76,93 +55,88 @@ const VOLUME_DATA = [
   { creditType: 'Efficiency', volume: 25000, value: 212500 }
 ]
 
-const RECENT_TRADES: Trade[] = [
-  { tradeId: 'trade_001', quantity: 500, price: 10.25, buyer: '0x742d...', seller: '0xAb5c...', timestamp: '14:32' },
-  { tradeId: 'trade_002', quantity: 1200, price: 12.45, buyer: '0x5c3E...', seller: '0x8d2A...', timestamp: '14:28' },
-  { tradeId: 'trade_003', quantity: 800, price: 9.95, buyer: '0x9f1B...', seller: '0xC4E7...', timestamp: '14:15' },
-  { tradeId: 'trade_004', quantity: 300, price: 8.75, buyer: '0xD2F8...', seller: '0x1aA3...', timestamp: '13:58' },
-  { tradeId: 'trade_005', quantity: 2000, price: 10.50, buyer: '0x4E9D...', seller: '0xB7c5...', timestamp: '13:42' }
-]
+const service = getCarbonMarketplaceService()
+const currentUser = '0x742d35Cc6634C0532925a3b844Bc0e8b1E55e2e9' // Mock current user
 
 export function MarketplaceTradingDashboard() {
   const [selectedCreditType, setSelectedCreditType] = useState('renewable')
-  const [activeTab, setActiveTab] = useState<'orderbook' | 'trades' | 'charts' | 'create'>('orderbook')
+  const [activeTab, setActiveTab] = useState<'orderbook' | 'trades' | 'my-orders' | 'charts'>('orderbook')
   const [showCreateOrder, setShowCreateOrder] = useState(false)
+  
+  const [bids, setBids] = useState<Order[]>([])
+  const [asks, setAsks] = useState<Order[]>([])
+  const [trades, setTrades] = useState<Trade[]>([])
+  const [myOrders, setMyOrders] = useState<Order[]>([])
+  const [marketPrices, setMarketPrices] = useState<Record<string, MarketPrice>>({})
+  const [marketStats, setMarketStats] = useState<any>({})
+
   const [orderForm, setOrderForm] = useState({
     type: 'buy' as 'buy' | 'sell',
     creditType: 'renewable',
     quantity: '',
     pricePerCredit: ''
   })
-  const [mockOrders, setMockOrders] = useState<Order[]>([
-    {
-      orderId: 'order_001',
-      type: 'buy',
-      creditType: 'renewable',
-      quantity: 1000,
-      pricePerCredit: 10.15,
-      status: 'open',
-      creator: '0x742d35Cc6634C0532925a3b844Bc0e8b1E55e2e9',
-      timestamp: '14:30'
-    },
-    {
-      orderId: 'order_002',
-      type: 'sell',
-      creditType: 'renewable',
-      quantity: 500,
-      pricePerCredit: 10.35,
-      status: 'open',
-      creator: '0xAb5801a7d398351b8be11c63050f4155b3dd4e5b',
-      timestamp: '14:25'
-    },
-    {
-      orderId: 'order_003',
-      type: 'buy',
-      creditType: 'forestry',
-      quantity: 750,
-      pricePerCredit: 12.40,
-      status: 'partially-filled',
-      creator: '0x5c3E91C2FCC9D74d1B8b1c7E5e7e3E5e5e5e5e5e',
-      timestamp: '14:20'
-    }
-  ])
 
-  const marketPrices: Record<string, MarketPrice> = {
-    renewable: { creditType: 'renewable', bid: 10.15, ask: 10.35, last: 10.25, trend: 'up' },
-    forestry: { creditType: 'forestry', bid: 12.40, ask: 12.60, last: 12.50, trend: 'up' },
-    agriculture: { creditType: 'agriculture', bid: 9.90, ask: 10.10, last: 10.00, trend: 'down' },
-    efficiency: { creditType: 'efficiency', bid: 8.70, ask: 8.90, last: 8.80, trend: 'neutral' }
-  }
+  const fetchMarketData = async () => {
+    const creditTypes = ['renewable', 'forestry', 'agriculture', 'energy-efficiency'];
+    
+    // Fetch order book for selected type
+    const { bids, asks } = service.getOrderBook(selectedCreditType);
+    setBids(bids);
+    setAsks(asks);
+
+    // Fetch all trades and user-specific orders
+    setTrades(service.getTrades(50));
+    setMyOrders(service.getUserOrders(currentUser));
+
+    // Fetch prices for all types
+    const prices: Record<string, MarketPrice> = {};
+    for (const type of creditTypes) {
+      const price = service.getMarketPrice(type);
+      if (price) {
+        prices[type] = price;
+      }
+    }
+    setMarketPrices(prices);
+    
+    // Fetch market stats
+    setMarketStats(service.getMarketStats());
+  };
+
+  useEffect(() => {
+    fetchMarketData();
+    const interval = setInterval(fetchMarketData, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, [selectedCreditType]);
+
 
   const currentPrice = marketPrices[selectedCreditType]
-  const bid_ask_spread = ((currentPrice.ask - currentPrice.bid) / currentPrice.bid * 100).toFixed(2)
+  const bid_ask_spread = currentPrice ? ((currentPrice.ask - currentPrice.bid) / currentPrice.bid * 100).toFixed(2) : '0.00'
 
-  const handleCreateOrder = (e: React.FormEvent) => {
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!orderForm.quantity || !orderForm.pricePerCredit) return
 
-    const newOrder: Order = {
-      orderId: `order_${Date.now()}`,
-      type: orderForm.type,
-      creditType: orderForm.creditType,
-      quantity: parseInt(orderForm.quantity),
-      pricePerCredit: parseFloat(orderForm.pricePerCredit),
-      status: 'open',
-      creator: '0x742d35Cc6634C0532925a3b844Bc0e8b1E55e2e9',
-      timestamp: new Date().toLocaleTimeString()
-    }
+    await service.createOrder(
+      orderForm.type,
+      orderForm.creditType,
+      parseInt(orderForm.quantity),
+      parseFloat(orderForm.pricePerCredit),
+      currentUser
+    );
 
-    setMockOrders([...mockOrders, newOrder])
     setOrderForm({ type: 'buy', creditType: 'renewable', quantity: '', pricePerCredit: '' })
     setShowCreateOrder(false)
+    fetchMarketData(); // Refresh data after creating order
   }
 
-  const cancelOrder = (orderId: string) => {
-    setMockOrders(mockOrders.filter(o => o.orderId !== orderId))
+  const cancelOrder = async (orderId: string) => {
+    await service.cancelOrder(orderId);
+    fetchMarketData(); // Refresh data after cancelling
   }
 
-  const buyOrders = mockOrders.filter(o => o.type === 'buy' && o.creditType === selectedCreditType && o.status !== 'filled')
-  const sellOrders = mockOrders.filter(o => o.type === 'sell' && o.creditType === selectedCreditType && o.status !== 'filled')
+  const buyOrders = bids;
+  const sellOrders = asks;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 p-6">
@@ -188,7 +162,7 @@ export function MarketplaceTradingDashboard() {
 
         {/* Market Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {Object.values(marketPrices).map(price => (
+          {Object.values(marketPrices).map((price: MarketPrice) => (
             <Card key={price.creditType} className="border-l-4 border-l-emerald-500">
               <CardContent className="pt-6">
                 <div className="text-sm text-gray-600 mb-1 capitalize">{price.creditType}</div>
@@ -220,7 +194,7 @@ export function MarketplaceTradingDashboard() {
 
         {/* Credit Type Selection */}
         <div className="flex gap-2 flex-wrap">
-          {['renewable', 'forestry', 'agriculture', 'efficiency'].map(type => (
+          {Object.keys(marketPrices).map(type => (
             <button
               key={type}
               onClick={() => setSelectedCreditType(type)}

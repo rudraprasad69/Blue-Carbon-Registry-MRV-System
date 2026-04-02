@@ -10,11 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('market')
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    setIsLoading(false)
-  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-green-900 to-slate-900 p-6 space-y-6">
@@ -24,10 +19,29 @@ export default function DashboardPage() {
         <p className="text-green-300">Real-time market data, project analysis, and performance tracking</p>
       </div>
 
+      {/* What's New Section */}
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-slate-800/40 backdrop-blur border border-green-500/20 rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-white mb-4">What's New</h2>
+          <ul className="space-y-2">
+            <li className="text-green-300">
+              <a href="/dashboard/satellite-imagery" className="hover:underline">
+                🛰️ **Satellite Imagery Viewer**: Monitor your projects with the latest satellite data.
+              </a>
+            </li>
+            <li className="text-green-300">
+              <a href="/dashboard/ai-insights" className="hover:underline">
+                🤖 **AI Biomass Prediction**: Use our new AI model to predict project biomass.
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-slate-800 border border-green-500/20">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800 border border-green-500/20">
             <TabsTrigger value="market" className="data-[state=active]:bg-green-600">
               Market
             </TabsTrigger>
@@ -39,9 +53,6 @@ export default function DashboardPage() {
             </TabsTrigger>
             <TabsTrigger value="reports" className="data-[state=active]:bg-green-600">
               Reports
-            </TabsTrigger>
-            <TabsTrigger value="admin" className="data-[state=active]:bg-green-600">
-              Admin
             </TabsTrigger>
           </TabsList>
 
@@ -83,14 +94,6 @@ export default function DashboardPage() {
             <div className="bg-slate-800/40 backdrop-blur border border-green-500/20 rounded-lg p-6">
               <h2 className="text-2xl font-bold text-white mb-6">Export & Reports</h2>
               <AdvancedReportBuilder />
-            </div>
-          </TabsContent>
-
-          {/* Admin Tab */}
-          <TabsContent value="admin" className="space-y-4">
-            <div className="bg-slate-800/40 backdrop-blur border border-green-500/20 rounded-lg p-6">
-              <h2 className="text-2xl font-bold text-white mb-6">Administration</h2>
-              <AdminDashboard />
             </div>
           </TabsContent>
         </Tabs>
